@@ -20,29 +20,15 @@ package datastore {
     val db = client.getDatabase("comicazi")
 
     def put(schema: Schema, table: String) : Future[String] = {
-      // Create insertable document
-      var bsonDoc = new BsonDocument()
-      schema.getData().foreach {
-        case(k, v) => v match {
-          case _: String => bsonDoc.append(k, BsonString(v.asInstanceOf[String]))
-          case _: Number => bsonDoc.append(k, BsonInt32(v.asInstanceOf[Int]))
-          case _: Boolean => bsonDoc.append(k, BsonBoolean(v.asInstanceOf[Boolean]))
-        }
-      }
-      val doc = Document(bsonDoc)
-
-      // Insert document the Mongo way
       val coll = db.getCollection[Document](table)
-      val observable = coll.insertOne(doc)
-
-      val out = Promise[String]()
-      val successString = "success"
-      observable.subscribe(new Observer[Completed] {
-        override def onNext(result: Completed): Unit = println("Inserted comic")
-        override def onError(e: Throwable): Unit = out.failure(e)
-        override def onComplete(): Unit = out.success(successString)
+      val json = schema.toJson()
+      val p = Promise[String]()
+      coll.insertOne(Document(json)).subscribe(new Observer[Completed] {
+        override def onNext(r: Completed): Unit = println("Inserted comic: " + json)
+        override def onError(e: Throwable): Unit = p.failure(e)
+        override def onComplete(): Unit = p.success(json)
       })
-      out.future
+      p.future
     }
 
     def get(query: String, table: String) = Future[String] {

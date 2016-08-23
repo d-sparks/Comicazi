@@ -6,8 +6,7 @@ import scala.collection._
 package schemas {
 
   trait Schema {
-    def getData() : Map[String, Any]
-    def getJson() : String
+    def toJson() : String
   }
 
   // note: determine whether this needs to be a case class
@@ -36,8 +35,8 @@ package schemas {
     })
     private val enforcedData = d.toMap[String, Any]
     private val enforcedJson = mapper.writeValueAsString(d)
-    def getData() = enforcedData
-    def getJson() = enforcedJson
+    def toMap() = enforcedData
+    def toJson() = enforcedJson
   }
 
 }
