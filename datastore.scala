@@ -1,11 +1,8 @@
-import scala.util._
-import scala.collection._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 import org.mongodb.scala._
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.mutable.Document
-import scala.reflect.runtime.universe._
 import schemas._
 
 package datastore {

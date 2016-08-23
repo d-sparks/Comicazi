@@ -1,7 +1,7 @@
 import colossus._
 import protocols.http._
 import scala.concurrent._
-import scala.collection._
+// import scala.collection._
 import ExecutionContext.Implicits.global
 import datastore._
 import schemas._
