@@ -2,6 +2,7 @@ import org.scalatest.time.{Span, Seconds, Millis}
 import org.scalatest._
 import org.scalatest.concurrent._
 import datastore._
+import json.Converter
 
 package datastore {
 
@@ -24,5 +25,14 @@ package datastore {
         dbOutput shouldBe doc
       }
     }
+
+    "A get" should "should return the doc in json" in {
+      val dbReturn = mongo.get(doc, "docs")
+      whenReady(dbReturn) { dbOutput =>
+        val filtered = Converter.filterFields(dbOutput, List("_id"))
+        filtered shouldBe doc
+      }
+    }
+
   }
 }
