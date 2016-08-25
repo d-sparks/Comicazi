@@ -3,12 +3,11 @@ import ExecutionContext.Implicits.global
 import org.mongodb.scala._
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.mutable.Document
-import schemas._
 
 package datastore {
 
   trait DataStore {
-    def put(schema: Schema, table: String): Future[String]
+    def put(doc: String, table: String): Future[String]
     def get(query: String, table: String): Future[String]
   }
 
@@ -16,14 +15,13 @@ package datastore {
     val client = MongoClient("mongodb://localhost:27017")
     val db = client.getDatabase(mongoDb)
 
-    def put(schema: Schema, table: String) : Future[String] = {
-      val coll = db.getCollection[Document](table)
-      val json = schema.toJson()
+    def put(doc: String, table: String) : Future[String] = {
       val p = Promise[String]()
-      coll.insertOne(Document(json)).subscribe(new Observer[Completed] {
-        override def onNext(r: Completed): Unit = println("Inserted comic: " + json)
+      val coll = db.getCollection[Document](table)
+      coll.insertOne(Document(doc)).subscribe(new Observer[Completed] {
+        override def onNext(r: Completed): Unit = println("Comic insert: " + doc)
         override def onError(e: Throwable): Unit = p.failure(e)
-        override def onComplete(): Unit = p.success(json)
+        override def onComplete(): Unit = p.success(doc)
       })
       p.future
     }

@@ -1,7 +1,4 @@
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import scala.collection._
+import json.Converter
 
 package schemas {
 
@@ -23,9 +20,7 @@ package schemas {
     private val strict: Boolean,
     private val schema: Map[String, String]
   ) {
-    private val mapper = new ObjectMapper() with ScalaObjectMapper
-    mapper.registerModule(DefaultScalaModule)
-    private val d = mapper.readValue[mutable.Map[String, Any]](json)
+    private val d = Converter.toMutableMap(json)
     if (strict) { schema.foreach({case (k, v) => require(d.contains(k))}) }
     d.foreach({case (k, v) =>
       require(schema.get(k) match {
@@ -34,7 +29,7 @@ package schemas {
       })
     })
     private val enforcedData = d.toMap[String, Any]
-    private val enforcedJson = mapper.writeValueAsString(d)
+    private val enforcedJson = Converter.fromMap(d)
     def toMap() = enforcedData
     def toJson() = enforcedJson
   }

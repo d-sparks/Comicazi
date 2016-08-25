@@ -4,8 +4,6 @@ import scala.concurrent._
 // import scala.collection._
 import ExecutionContext.Implicits.global
 import datastore._
-import schemas._
-
 
 package endpoints {
 
@@ -13,7 +11,7 @@ package endpoints {
 
     def postComic(request: HttpRequest) : Future[String] = {
       // TODO: error handling
-      datastore.put(new Comic(request.body.toString()), "comics")
+      datastore.put(request.body.toString(), "comics")
     }
 
   }
