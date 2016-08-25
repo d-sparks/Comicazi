@@ -12,9 +12,9 @@ package datastore {
     def get(query: String, table: String): Future[String]
   }
 
-  class MongoStore(mongoUrl: String) extends DataStore {
+  class MongoStore(mongoUrl: String, mongoDb: String) extends DataStore {
     val client = MongoClient("mongodb://localhost:27017")
-    val db = client.getDatabase("comicazi")
+    val db = client.getDatabase(mongoDb)
 
     def put(schema: Schema, table: String) : Future[String] = {
       val coll = db.getCollection[Document](table)

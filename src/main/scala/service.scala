@@ -30,7 +30,7 @@ object Main extends App {
   implicit val sys = ActorSystem()
   implicit val io = IOSystem()
 
-  val eps = new Endpoints(new MongoStore("localhost:27017"))
+  val eps = new Endpoints(new MongoStore("localhost:27017", "comicazi"))
 
   Server.start("comicazi", 9000) {
     worker => new ComicaziInitializer(worker, eps)
