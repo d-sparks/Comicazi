@@ -9,5 +9,6 @@ lazy val root = (project in file(".")).
     libraryDependencies += "org.mongodb" % "bson" % "3.1.0",
     libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.0",
     libraryDependencies += "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.6.5",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test",
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 )
