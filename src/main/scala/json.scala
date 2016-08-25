@@ -13,6 +13,11 @@ package json {
       mapper.readValue[mutable.Map[String, Any]](json)
     }
     def toMap(json: String) = toMutableMap(json).toMap[String, Any]
+    def filterFields(json: String, fields: List[String]) = {
+      val m = toMutableMap(json)
+      for (field <- fields) { m.remove(field) }
+      fromMap(m.toMap[String,Any])
+    }
   }
 
 }
