@@ -9,11 +9,12 @@ package datastore {
       "localhost:27017",
       "comicazi-test"
     )
-    val comic = "{\"publisher\": \"DC\", \"year\": 1973, \"mint\": true}"
-    "A comic put" should "return the json of the comic" in {
-      val dbReturn = mongo.put(comic, "comics")
+    val doc = """{"a":"b"}"""
+
+    "A put" should "return the json of the doc" in {
+      val dbReturn = mongo.put(doc, "docs")
       whenReady(dbReturn) { dbOutput =>
-        dbOutput shouldBe comic
+        dbOutput shouldBe doc
       }
     }
   }
