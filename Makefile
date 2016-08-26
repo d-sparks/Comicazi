@@ -3,5 +3,5 @@ SHELL := /bin/bash
 .PHONY: test
 
 test:
-	sbt test
+	sbt -mem 1024 test
 
