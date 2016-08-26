@@ -2,16 +2,16 @@ import json.Converter
 
 package schemas {
 
-  case class SchemaValue(value: String, req: Boolean)
-  case class Schema(m: Map[String, SchemaValue])
-
   object Schemas {
-    val comic = Schema(Map[String, SchemaValue](
+    case class SchemaValue(value: String, req: Boolean)
+    type Json = Map[String, SchemaValue]
+
+    val comic = Map[String, SchemaValue](
       // Required fields
       "publisher" -> SchemaValue("class java.lang.String", true),
       "year" -> SchemaValue("class java.lang.Integer", true),
       "mint" -> SchemaValue("class java.lang.Boolean", true)
-    ))
+    ).asInstanceOf[Json]
   }
 
   // note: determine whether this needs to be a case class
@@ -24,16 +24,16 @@ package schemas {
 
   abstract class JsonSchemaEnforcer(
     private val json: String,
-    private val schema: Schema
+    private val schema: Schemas.Json
   ) {
     private val data = Converter.toMutableMap(json)
     // throw away fields that are not in the schema
-    data.retain({case (k, v) => schema.m.contains(k)})
+    data.retain({case (k, v) => schema.contains(k)})
     // check that all required fields are provided
-    for ((k, v) <- schema.m) if(v.req) require(data.contains(k))
+    for ((k, v) <- schema) if(v.req) require(data.contains(k))
     // enforce type on provided fields
     for ((k, v) <- data) {
-      require(schema.m.get(k) match {
+      require(schema.get(k) match {
         case Some(expected) => expected.value == v.getClass().toString()
         case None => false
       })
