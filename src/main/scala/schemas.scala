@@ -2,10 +2,6 @@ import json.Converter
 
 package schemas {
 
-  trait Jsonable {
-    def toJson() : String
-  }
-
   case class SchemaValue(value: String, req: Boolean)
   case class Schema(m: Map[String, SchemaValue])
 
@@ -14,9 +10,7 @@ package schemas {
       // Required fields
       "publisher" -> SchemaValue("class java.lang.String", true),
       "year" -> SchemaValue("class java.lang.Integer", true),
-      "mint" -> SchemaValue("class java.lang.Boolean", true),
-      // Optional fields
-      "stock" -> SchemaValue("class java.lang.Integer", false)
+      "mint" -> SchemaValue("class java.lang.Boolean", true)
     ))
   }
 
@@ -26,7 +20,7 @@ package schemas {
   ) extends JsonSchemaEnforcer(
     json,
     Schemas.comic
-  ) with Jsonable
+  )
 
   abstract class JsonSchemaEnforcer(
     private val json: String,
@@ -40,7 +34,7 @@ package schemas {
     // enforce type on provided fields
     for ((k, v) <- data) {
       require(schema.m.get(k) match {
-        case Some(expected) => expected == v.getClass().toString()
+        case Some(expected) => expected.value == v.getClass().toString()
         case None => false
       })
     }
