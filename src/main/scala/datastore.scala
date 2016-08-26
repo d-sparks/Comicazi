@@ -33,17 +33,14 @@ package datastore {
       val bsonQuery = Document(query).toBsonDocument
       val dbResult = coll.find(bsonQuery).toFuture()
       dbResult.onComplete {
-        case Success(results) => {
-          if(results.length > 0) {
-            p.success(results(0).toJson())
-          } else {
-            p.failure(new Exception("DocumentNotFound"))
-          }
-        }
+        case Success(results) => { p.success(
+          if(results.length > 0) results(0).toJson() else ""
+        )}
         case Failure(e) => p.failure(e)
       }
       p.future
     }
+
   }
 
 }

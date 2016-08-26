@@ -14,23 +14,31 @@ package datastore {
     )
 
     private val mongo = new MongoStore(
-      "localhost:27017",
+      "mongo://localhost:27017",
       "comicazi-test"
     )
-    val doc = """{"a":"b"}"""
+    val doc1 = """{"a":"b"}"""
+    val doc2 = """{"c":"d"}"""
 
     "A put" should "return the json of the doc" in {
-      val dbReturn = mongo.put(doc, "docs")
+      val dbReturn = mongo.put(doc1, "docs")
       whenReady(dbReturn) { dbOutput =>
-        dbOutput shouldBe doc
+        dbOutput shouldBe doc1
       }
     }
 
     "A get" should "should return the doc in json" in {
-      val dbReturn = mongo.get(doc, "docs")
+      val dbReturn = mongo.get(doc1, "docs")
       whenReady(dbReturn) { dbOutput =>
         val filtered = Converter.filterFields(dbOutput, List("_id"))
-        filtered shouldBe doc
+        filtered shouldBe doc1
+      }
+    }
+
+    it should "return empty string if doc not found" in {
+      val dbReturn = mongo.get(doc2, "docs")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe ""
       }
     }
 
