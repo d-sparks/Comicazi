@@ -18,6 +18,14 @@ package json {
       for (field <- fields) { m.remove(field) }
       fromMap(m.toMap[String,Any])
     }
+    def extend(json: String, extension: String) = {
+      val m = toMutableMap(json)
+      val mExt = toMutableMap(extension)
+      for ((k, v) <- mExt) {
+        if(!m.contains(k)) m.put(k,v)
+      }
+      fromMap(m.toMap)
+    }
   }
 
 }
