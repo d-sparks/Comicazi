@@ -1,4 +1,4 @@
-import scala.concurrent._
+import scala.concurrent.{Future, Promise, ExecutionContext}
 import ExecutionContext.Implicits.global
 import org.mongodb.scala.{MongoClient, Observer, Completed, Document}
 import scala.util.{Success, Failure}
@@ -30,7 +30,7 @@ package datastore {
     }
 
     def get(query: String, table: String) : Future[String] = {
-      val p = promise[String]
+      val p = Promise[String]
       val coll = db.getCollection[Document](table)
       val bsonQuery = Document(query).toBsonDocument
       val dbResult = coll.find(bsonQuery).toFuture()
