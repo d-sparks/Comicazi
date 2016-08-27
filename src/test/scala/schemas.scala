@@ -1,37 +1,50 @@
 import org.scalatest.{FlatSpec, Matchers}
 import schemas.Comic
+import scala.util.control.Breaks.{break, breakable}
 import json.JSON
 import testhelpers.Helpers.ExampleComic
+import schemas._
+import schemas.Schemas.{Schema, SchemaValue}
+import testhelpers.Helpers
 
 package schemas {
-  class ComicSpec extends FlatSpec with Matchers {
-    "Comic constructor" should "filter fields not in the schema" in {
-      val example = ExampleComic.asMutableMap()
-      // add a field to be filtered
-      example.put("bogus", "should be filtered")
-      // construct a comic
-      val comicMap = example.toMap
-      val comicJson = JSON.fromMap(comicMap)
-      val comic = new Comic(comicJson)
-      // verify the field is filtered in the comic object
-      val expectedComicToJson = JSON.filterFields(comicJson, List("bogus"))
-      comic.toJson shouldBe expectedComicToJson
-    }
+  trait JsonSchemaBehaviors { this: FlatSpec with Matchers =>
+    def jsonschemaenforcer(
+      json: String,
+      schema: Schema
+    ) {
+      it should "filter fields not in the schema" in {
+        val bogusJson = JSON.extend(json, """{"bogus_field":true}""")
+        val instance = (new JsonSchemaEnforcer(json, schema)).toMap()
+        val keys = instance.keys
+        for (k <- keys) { instance should contain key k }
+      }
 
-    it should "fail if required fields aren't provided" in {
-      val example = ExampleComic.asMutableMap()
-      // remove a required field
-      example.remove("mint")
-      // make json for comic constructor
-      val comicJson = JSON.fromMap(Map[String,Any](
-        "publisher" -> "DC",
-        "year" -> 1973
-      ))
-      // make sure this throws an exception
-      try { new Comic(comicJson); throw new Exception("Wrong") }
-      catch {
-        case e: Throwable => e shouldBe a [java.lang.IllegalArgumentException]
+      it should "fail if required fields aren't included" in {
+        val instance = JSON.toMutableMap(json)
+        val reqFields = schema.filter({
+          case (k: String, x: SchemaValue) => x.req
+        }).keys
+        breakable { for (k <- reqFields) { if(instance.contains(k)) {
+          instance.remove(k)
+          break
+        }}}
+        val bogusJson = JSON.fromMap(instance.toMap)
+        try {
+          new JsonSchemaEnforcer(bogusJson, schema)
+          throw new Exception("Wrong exception type")
+        }
+        catch { case e: Throwable =>
+          e shouldBe a [java.lang.IllegalArgumentException]
+        }
       }
     }
   }
+
+  class ComicSpec extends FlatSpec with Matchers with JsonSchemaBehaviors {
+    val comicJson = Helpers.ExampleComic.asJson()
+    val comicSchema = Schemas.comic
+    it should behave like jsonschemaenforcer(comicJson, comicSchema)
+  }
+
 }

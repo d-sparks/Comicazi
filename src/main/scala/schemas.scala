@@ -4,14 +4,15 @@ package schemas {
 
   object Schemas {
     case class SchemaValue(value: String, req: Boolean)
-    type Json = Map[String, SchemaValue]
+    type Schema = Map[String, SchemaValue]
 
     val comic = Map[String, SchemaValue](
       // Required fields
       "publisher" -> SchemaValue("class java.lang.String", true),
       "year" -> SchemaValue("class java.lang.Integer", true),
       "mint" -> SchemaValue("class java.lang.Boolean", true)
-    ).asInstanceOf[Json]
+    ).asInstanceOf[Schema]
+
   }
 
   // note: determine whether this needs to be a case class
@@ -22,9 +23,9 @@ package schemas {
     Schemas.comic
   )
 
-  abstract class JsonSchemaEnforcer(
+  class JsonSchemaEnforcer(
     private val json: String,
-    private val schema: Schemas.Json
+    private val schema: Schemas.Schema
   ) {
     private val data = JSON.toMutableMap(json)
     // throw away fields that are not in the schema
