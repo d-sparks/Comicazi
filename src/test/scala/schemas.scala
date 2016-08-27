@@ -8,7 +8,10 @@ import schemas.Schemas.{Schema, SchemaValue}
 import testhelpers.Helpers
 
 package schemas {
-  trait JsonSchemaBehaviors { this: FlatSpec with Matchers =>
+
+  class SchemaSpec extends FlatSpec with Matchers
+
+  trait JsonSchemaBehaviors { this: SchemaSpec =>
     def jsonschemaenforcer(
       json: String,
       schema: Schema
@@ -32,7 +35,7 @@ package schemas {
         val bogusJson = JSON.fromMap(instance.toMap)
         try {
           new JsonSchemaEnforcer(bogusJson, schema)
-          throw new Exception("Wrong exception type")
+          throw new Exception()
         }
         catch { case e: Throwable =>
           e shouldBe a [java.lang.IllegalArgumentException]
@@ -41,10 +44,16 @@ package schemas {
     }
   }
 
-  class ComicSpec extends FlatSpec with Matchers with JsonSchemaBehaviors {
+  class ComicSpec extends SchemaSpec with JsonSchemaBehaviors {
     val comicJson = Helpers.ExampleComic.asJson()
     val comicSchema = Schemas.comic
     it should behave like jsonschemaenforcer(comicJson, comicSchema)
+  }
+
+  class SubscriptionSpec extends SchemaSpec with JsonSchemaBehaviors {
+    val subJson = Helpers.ExampleSubscription.asJson()
+    val subSchema = Schemas.subscription
+    it should behave like jsonschemaenforcer(subJson, subSchema)
   }
 
 }

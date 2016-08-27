@@ -15,12 +15,18 @@ package testhelpers {
       }
     }
 
-    object ExampleComic {
-      private val _data = mutable.Map[String,Any](
-        "publisher" -> "DC",
-        "year" -> 1973,
-        "mint" -> true
-      )
+    val ExampleComic = new Example(mutable.Map[String,Any](
+      "publisher" -> "DC",
+      "year" -> 1973,
+      "mint" -> true
+    ))
+
+    val ExampleSubscription = new Example(mutable.Map[String,Any](
+      "publisher" -> "Image",
+      "email" -> "amy@x.ai"
+    ))
+
+    class Example(_data: mutable.Map[String,Any]) {
       def asMutableMap() = _data.clone()
       def asMap() = _data.toMap
       def asJson() = JSON.fromMap(asMap())
