@@ -21,7 +21,7 @@ package testhelpers {
         "year" -> 1973,
         "mint" -> true
       )
-      def asMutableMap() = _data
+      def asMutableMap() = _data.clone()
       def asMap() = _data.toMap
       def asJson() = Converter.fromMap(asMap())
       def asComic() = new Comic(asJson())
