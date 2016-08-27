@@ -6,6 +6,7 @@ import org.scalatest.concurrent._
 import scala.util.{Failure, Success}
 import datastore._
 import json.Converter
+import testhelpers.Helpers
 
 package datastore {
 
@@ -22,14 +23,7 @@ package datastore {
     )
     val doc = """{"a":"b"}"""
 
-    def blockingCall[T](f: Future[T]) = {
-      Await.ready(f, Duration.Inf).value.get match {
-        case Failure(e) => throw e
-        case Success(result) => Right(result)
-      }
-    }
-
-    def drop(table: String) = blockingCall(mongo.drop(table))
+    def drop(table: String) = Helpers.blockingCall(mongo.drop(table))
 
     "A put" should "return the json of the doc" in {
       drop("put-happy")
@@ -49,7 +43,7 @@ package datastore {
 
     "A get" should "should return the doc in json" in {
       drop("get-happy")
-      blockingCall(mongo.put(doc, "get-happy"))
+      Helpers.blockingCall(mongo.put(doc, "get-happy"))
       val dbReturn = mongo.get(doc, "get-happy")
       whenReady(dbReturn) { dbOutput =>
         val filtered = Converter.filterFields(dbOutput, List("_id"))
