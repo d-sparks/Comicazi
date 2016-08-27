@@ -1,26 +1,34 @@
 import org.scalatest.{FlatSpec, Matchers}
 import schemas.Comic
 import json.Converter
+import testhelpers.Helpers.ExampleComic
 
 package schemas {
   class ComicSpec extends FlatSpec with Matchers {
     "Comic constructor" should "filter fields not in the schema" in {
-      val comicJson = Converter.fromMap(Map[String,Any](
-        "publisher" -> "DC",
-        "year" -> 1973,
-        "mint" -> true,
-        "bogus" -> "should be filtered"
-      ))
+      val example = ExampleComic.asMutableMap()
+      // add a field to be filtered
+      example.put("bogus", "should be filtered")
+      // construct a comic
+      val comicMap = example.toMap
+      val comicJson = Converter.fromMap(comicMap)
       val comic = new Comic(comicJson)
-      comic.toJson shouldBe Converter.filterFields(comicJson, List("bogus"))
+      // verify the field is filtered in the comic object
+      val expectedComicToJson = Converter.filterFields(comicJson, List("bogus"))
+      comic.toJson shouldBe expectedComicToJson
     }
 
     it should "fail if required fields aren't provided" in {
+      val example = ExampleComic.asMutableMap()
+      // remove a required field
+      example.remove("mint")
+      // make json for comic constructor
       val comicJson = Converter.fromMap(Map[String,Any](
         "publisher" -> "DC",
         "year" -> 1973
       ))
-      try { new Comic(comicJson) }
+      // make sure this throws an exception
+      try { new Comic(comicJson); throw new Exception("Wrong") }
       catch {
         case e: Throwable => e shouldBe a [java.lang.IllegalArgumentException]
       }
