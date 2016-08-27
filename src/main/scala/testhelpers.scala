@@ -2,7 +2,7 @@ import scala.concurrent.{Future, Await}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
-import json.Converter
+import json.JSON
 import schemas.{Comic}
 
 package testhelpers {
@@ -23,7 +23,7 @@ package testhelpers {
       )
       def asMutableMap() = _data.clone()
       def asMap() = _data.toMap
-      def asJson() = Converter.fromMap(asMap())
+      def asJson() = JSON.fromMap(asMap())
       def asComic() = new Comic(asJson())
     }
 

@@ -5,7 +5,7 @@ import scala.collection._
 
 package json {
 
-  object Converter {
+  object JSON {
     private val mapper = new ObjectMapper() with ScalaObjectMapper
     mapper.registerModule(DefaultScalaModule)
     def fromMap(m: Map[String, Any]) = mapper.writeValueAsString(m)

@@ -1,6 +1,6 @@
 import org.scalatest.{FlatSpec, Matchers}
 import schemas.Comic
-import json.Converter
+import json.JSON
 import testhelpers.Helpers.ExampleComic
 
 package schemas {
@@ -11,10 +11,10 @@ package schemas {
       example.put("bogus", "should be filtered")
       // construct a comic
       val comicMap = example.toMap
-      val comicJson = Converter.fromMap(comicMap)
+      val comicJson = JSON.fromMap(comicMap)
       val comic = new Comic(comicJson)
       // verify the field is filtered in the comic object
-      val expectedComicToJson = Converter.filterFields(comicJson, List("bogus"))
+      val expectedComicToJson = JSON.filterFields(comicJson, List("bogus"))
       comic.toJson shouldBe expectedComicToJson
     }
 
@@ -23,7 +23,7 @@ package schemas {
       // remove a required field
       example.remove("mint")
       // make json for comic constructor
-      val comicJson = Converter.fromMap(Map[String,Any](
+      val comicJson = JSON.fromMap(Map[String,Any](
         "publisher" -> "DC",
         "year" -> 1973
       ))

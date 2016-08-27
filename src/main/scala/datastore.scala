@@ -4,7 +4,7 @@ import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import org.mongodb.scala.{MongoClient, Observer, Completed, Document}
 import scala.util.{Success, Failure}
-import json.Converter
+import json.JSON
 
 package datastore {
 
@@ -64,7 +64,7 @@ package datastore {
     def put(doc: String, table: String): Future[String] = {
       val p = Promise[String]
       try {
-        val jsonDoc = Converter.fromMap(Converter.toMap(doc))
+        val jsonDoc = JSON.fromMap(JSON.toMap(doc))
         data.getOrElseUpdate(table, MutableList[String]()) += jsonDoc
         val p = Promise[String]
         p.success(jsonDoc)

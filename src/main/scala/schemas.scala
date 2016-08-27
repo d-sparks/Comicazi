@@ -1,4 +1,4 @@
-import json.Converter
+import json.JSON
 
 package schemas {
 
@@ -26,7 +26,7 @@ package schemas {
     private val json: String,
     private val schema: Schemas.Json
   ) {
-    private val data = Converter.toMutableMap(json)
+    private val data = JSON.toMutableMap(json)
     // throw away fields that are not in the schema
     data.retain({case (k, v) => schema.contains(k)})
     // check that all required fields are provided
@@ -39,7 +39,7 @@ package schemas {
       })
     }
     private val enforcedData = data.toMap[String, Any]
-    private val enforcedJson = Converter.fromMap(data)
+    private val enforcedJson = JSON.fromMap(data)
     def toMap() = enforcedData
     def toJson() = enforcedJson
   }

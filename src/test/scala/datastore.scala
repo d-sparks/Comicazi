@@ -5,7 +5,7 @@ import org.scalatest._
 import org.scalatest.concurrent._
 import scala.util.{Failure, Success}
 import datastore._
-import json.Converter
+import json.JSON
 import testhelpers.Helpers
 
 package datastore {
@@ -38,7 +38,7 @@ package datastore {
         Helpers.blockingCall(store.put(doc, "get-happy"))
         val dbReturn = store.get(doc, "get-happy")
         whenReady(dbReturn) { dbOutput =>
-          val filtered = Converter.filterFields(dbOutput, List("_id"))
+          val filtered = JSON.filterFields(dbOutput, List("_id"))
           filtered shouldBe doc
         }
       }
