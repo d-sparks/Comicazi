@@ -25,11 +25,10 @@ package endpoints {
     def postSubscription(request: HttpRequest) : Future[String] = {
       val body = request.body.toString()
       val sub = new Subscription(body)
-      datastore.get(sub.toJson(), "subscriptions").flatMap { result =>
-        result match {
-          case "" => datastore.put(sub.toJson(), "subscriptions")
-          case _ => throw new Exception("Subscription already exists")
-        }
+      val qpJson = s"""{"querypattern":"${sub.querypattern}"}"""
+      val querypattern = new QueryPattern(qpJson)
+      datastore.put(querypattern.toJson(), "querypatterns").flatMap { _ =>
+        datastore.put(sub.toJson(), "subscriptions")
       }
     }
 

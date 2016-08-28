@@ -23,11 +23,9 @@ package schemas {
       "querypattern" -> SchemaValue("class java.lang.String", true)
     )).asInstanceOf[Schema]
 
-    // getKeys returns a string of the keys of the given json in alphabetical
-    // order.
-    def getKeys(json: String) = {
-      JSON.toMutableMap(json).keys.toList.sorted.mkString
-    }
+    val querypattern = Map[String, SchemaValue](
+      "querypattern" -> SchemaValue("class java.lang.String", true)
+    ).asInstanceOf[Schema]
 
   }
 
@@ -38,10 +36,21 @@ package schemas {
 
   class Subscription(
     private val json: String
-  ) extends JsonSchemaEnforcer(
-    JSON.extend(json, s"""{"querypattern":"${Schemas.getKeys(json)}"}"""),
+  ) extends JsonSchemaEnforcer({
+      val filtered = JSON.filterFields(json, List("_id","email","querypattern"))
+      val querypattern = JSON.getKeys(filtered)
+      JSON.extend(json, s"""{"querypattern":"${querypattern}"}""")
+    },
     Schemas.subscription
-  )
+  ) {
+    val querypattern = JSON.getKeys(
+      JSON.filterFields(toJson(), List("email", "querypattern"))
+    )
+  }
+
+  class QueryPattern(
+    private val json: String
+  ) extends JsonSchemaEnforcer(json, Schemas.querypattern)
 
   class JsonSchemaEnforcer(
     private val json: String,

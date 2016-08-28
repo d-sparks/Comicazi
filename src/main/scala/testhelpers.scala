@@ -31,7 +31,6 @@ package testhelpers {
       def asMutableMap() = _data.clone()
       def asMap() = _data.toMap
       def asJson() = JSON.fromMap(asMap())
-      def asComic() = new Comic(asJson())
     }
 
   }

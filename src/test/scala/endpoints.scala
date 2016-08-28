@@ -9,6 +9,7 @@ import ExecutionContext.Implicits.global
 import datastore.InMemoryStore
 import endpoints.Endpoints
 import testhelpers.Helpers
+import schemas.Subscription
 
 package endpoints {
 
@@ -40,15 +41,26 @@ package endpoints {
       }
     }
 
-    "postSubscription" should "succeed for new subscription" in {
+    "postSubscription" should "create a subscription" in {
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(eps.postSubscription(subRequest))
-      // If the API had a get method, would prefer to test post/get
-      val dbReturn = db.get(subJson, "subscriptions")
-      whenReady(dbReturn) { dbOutput =>
+      val subReturn = db.get(subJson, "subscriptions")
+      whenReady(subReturn) { dbOutput =>
         dbOutput shouldBe subJson
       }
     }
+
+    it should "create a querypattern" in {
+      Helpers.blockingCall(db.drop("querypatterns"))
+      Helpers.blockingCall(eps.postSubscription(subRequest))
+      val sub = new Subscription(subJson)
+      val qpJson = s"""{"querypattern":"${sub.querypattern}"}"""
+      val qpReturn = db.get(qpJson, "querypatterns")
+      whenReady(qpReturn) { dbOutput =>
+        dbOutput shouldBe qpJson
+      }
+    }
+
 
   }
 

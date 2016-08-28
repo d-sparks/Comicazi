@@ -26,6 +26,10 @@ package json {
       }
       fromMap(m.toMap)
     }
+    def getKeys(json: String) = {
+      JSON.toMutableMap(json).keys.toList.sorted.mkString
+    }
+
   }
 
 }
