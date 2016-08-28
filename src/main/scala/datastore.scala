@@ -16,6 +16,7 @@ package datastore {
     def putMany(docs: List[String], table: String): Future[String]
     def get(query: String, table: String): Future[List[String]]
     def drop(table: String): Future[Unit]
+    def ping(): Future[Boolean]
   }
 
   // MongoStore uses MongoDB as a DataStore
@@ -80,6 +81,14 @@ package datastore {
         override def onComplete(): Unit = p.success()
       })
       p.future
+    }
+    def ping() : Future[Boolean] = {
+      // This is a hack; the MongoScalaDriver doesn't have a ping method (for
+      // shame!), from http://stackoverflow.com/questions/6832517/how-to-check-
+      // from-a-driver-if-mongodb-server-is-running
+      get("""{"do":"i exist?"}""", "reality").map { _ =>
+        true
+      }
     }
   }
 
