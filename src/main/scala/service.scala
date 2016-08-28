@@ -4,9 +4,12 @@ import service._
 import protocols.http._
 import UrlParsing._
 import HttpMethod._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import akka.actor._
 import endpoints._
 import datastore._
+import notification.NjWorker
 
 class Comicazi(
   context: ServerContext,
@@ -30,9 +33,21 @@ object Main extends App {
   implicit val sys = ActorSystem()
   implicit val io = IOSystem()
 
-  val eps = new Endpoints(new MongoStore("localhost:27017", "comicazi"))
+  val store = new MongoStore("localhost:27017", "comicazi")
 
-  Server.start("comicazi", 9000) {
-    worker => new ComicaziInitializer(worker, eps)
+  val eps = new Endpoints(store)
+
+  Server.start("comicazi", 9000) { worker =>
+    new ComicaziInitializer(worker, eps)
   }
+
+  // Start the notification actor
+  val njWorker = sys.actorOf(Props(new NjWorker(store, 1)))
+  sys.scheduler.schedule(
+    5 seconds,
+    5 seconds,
+    njWorker,
+    "look for a job"
+  )
+
 }
