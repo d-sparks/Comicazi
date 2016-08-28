@@ -6,18 +6,24 @@ import scala.collection._
 package json {
 
   object JSON {
+
     private val mapper = new ObjectMapper() with ScalaObjectMapper
     mapper.registerModule(DefaultScalaModule)
+
     def fromMap(m: Map[String, Any]) = mapper.writeValueAsString(m)
+
     def toMutableMap(json: String) = {
       mapper.readValue[mutable.Map[String, Any]](json)
     }
+
     def toMap(json: String) = toMutableMap(json).toMap[String, Any]
-    def filterFields(json: String, fields: List[String]) = {
+
+    def filter(json: String, fields: List[String]) = {
       val m = toMutableMap(json)
       for (field <- fields) { m.remove(field) }
       fromMap(m.toMap[String,Any])
     }
+
     def extend(json: String, extension: String) = {
       val m = toMutableMap(json)
       val mExt = toMutableMap(extension)
@@ -26,8 +32,15 @@ package json {
       }
       fromMap(m.toMap)
     }
+
     def getKeys(json: String) = {
-      JSON.toMutableMap(json).keys.toList.sorted.mkString
+      JSON.toMutableMap(json).keys.toList.sorted.mkString(",")
+    }
+
+    def project(json: String, fields: List[String]) = {
+      fromMap(toMutableMap(json).retain({(k: String, v: Any) =>
+        fields.contains(k)
+      }).toMap)
     }
 
   }

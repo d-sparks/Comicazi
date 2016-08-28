@@ -42,14 +42,14 @@ package schemas {
   class Subscription(
     private val json: String
   ) extends JsonSchemaEnforcer({
-      val filtered = JSON.filterFields(json, List("_id","email","querypattern"))
+      val filtered = JSON.filter(json, List("_id","email","querypattern"))
       val querypattern = JSON.getKeys(filtered)
       JSON.extend(json, s"""{"querypattern":"${querypattern}"}""")
     },
     Schemas.subscription
   ) {
     val querypattern = JSON.getKeys(
-      JSON.filterFields(toJson(), List("email", "querypattern"))
+      JSON.filter(toJson(), List("email", "querypattern"))
     )
   }
 

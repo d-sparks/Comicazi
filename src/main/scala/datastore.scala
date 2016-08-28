@@ -64,7 +64,7 @@ package datastore {
       dbResult.onComplete {
         case Success(r) => p.success(
           r.map({(res: Document) =>
-            JSON.filterFields(res.toJson(), List("_id"))
+            JSON.filter(res.toJson(), List("_id"))
           }).toList
         )
         case Failure(e) => p.failure(e)
