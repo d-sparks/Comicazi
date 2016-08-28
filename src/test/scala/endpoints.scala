@@ -9,7 +9,8 @@ import ExecutionContext.Implicits.global
 import datastore.MongoStore
 import endpoints.Endpoints
 import testhelpers.Helpers
-import schemas.Subscription
+import schemas.{Subscription, QueryPattern, PendingQuery}
+import json.Base64
 
 package endpoints {
 
@@ -22,13 +23,26 @@ package endpoints {
     val comicRequest = new HttpRequest(null, HttpBody(comicJson))
     val subRequest = new HttpRequest(null, HttpBody(subJson))
 
-    "postComic" should "succeed for new comic" in {
+    "postComic" should "add the comic to the db" in {
       Helpers.blockingCall(db.drop("comics"))
       Helpers.blockingCall(eps.postComic(comicRequest))
-      // If the API had a get method, would prefer to test post/get
       val dbReturn = db.get(comicJson, "comics")
       whenReady(dbReturn) { dbOutput =>
         dbOutput(0) shouldBe comicJson
+      }
+    }
+
+    it should "create appropriate pendingqueries" in {
+      Helpers.blockingCall(db.drop("pendingqueries"))
+      Helpers.blockingCall(db.drop("querypatterns"))
+      val qp = new QueryPattern("""{"querypattern": "publisher"}""")
+      Helpers.blockingCall(db.put(qp.toJson, "querypatterns"))
+      Helpers.blockingCall(eps.postComic(comicRequest))
+      val dbReturn = db.get("{}", "pendingqueries")
+      whenReady(dbReturn) { dbOutput =>
+        val actualPq = new PendingQuery(dbOutput(0))
+        val expectedPq = new PendingQuery("""{"publisher":"DC"}""", comicJson)
+        actualPq.toJson shouldBe expectedPq.toJson
       }
     }
 

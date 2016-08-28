@@ -1,4 +1,4 @@
-import json.JSON
+import json.{JSON, Base64}
 
 package schemas {
 
@@ -59,7 +59,13 @@ package schemas {
 
   class PendingQuery(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.pendingquery)
+  ) extends JsonSchemaEnforcer(json, Schemas.pendingquery) {
+    def this(querystring: String, comicJson: String) = this({
+      val qs = Base64.encode(querystring)
+      val c = Base64.encode(comicJson)
+      s"""{"querystring":"${qs}","comic":"${c}"}"""
+    })
+  }
 
   class JsonSchemaEnforcer(
     private val json: String,
