@@ -10,64 +10,62 @@ import testhelpers.Helpers
 
 package datastore {
 
-  class DataStoreSpec extends FlatSpec with ScalaFutures with Matchers
+  class MongoStoreSpec extends FlatSpec with ScalaFutures with Matchers {
+    val doc = """{"a":"b"}"""
+    def drop(table: String) = Helpers.blockingCall(store.drop(table))
 
-  trait DataStoreBehaviors { this: DataStoreSpec =>
-    def datastore(store: DataStore) {
-      val doc = """{"a":"b"}"""
-      def drop(table: String) = Helpers.blockingCall(store.drop(table))
-
-      "A put" should "return the json of the doc" in {
-        drop("put-happy")
-        val dbReturn = store.put(doc, "put-happy")
-        whenReady(dbReturn) { dbOutput =>
-          dbOutput shouldBe doc
-        }
-      }
-
-      it should "fail for invalid json input" in {
-        drop("put-sad")
-        val dbReturn = store.put("{", "put-sad")
-        whenReady(dbReturn.failed) { e =>
-          e shouldBe a [Throwable]
-        }
-      }
-
-      "A get" should "should return the doc in json" in {
-        drop("get-happy")
-        Helpers.blockingCall(store.put(doc, "get-happy"))
-        val dbReturn = store.get(doc, "get-happy")
-        whenReady(dbReturn) { dbOutput =>
-          dbOutput shouldBe List(doc)
-        }
-      }
-
-      it should "return empty string if doc not found" in {
-        drop("get-sad")
-        val dbReturn = store.get(doc, "get-sad")
-        whenReady(dbReturn) { dbOutput =>
-          dbOutput shouldBe List[String]()
-        }
-      }
-
-    }
-  }
-
-  class MongoStoreSpec extends DataStoreSpec with DataStoreBehaviors {
     // Because Circle.ci is slow
     implicit val defaultPatience = PatienceConfig(
       timeout = Span(1, Seconds),
       interval = Span(25, Millis)
     )
-    private val mongo = new MongoStore(
-      "mongo://localhost:27017",
+    private val store = new MongoStore(
+      "mongodb://localhost:27017",
       "comicazi-mongostore-test"
     )
-    it should behave like datastore(mongo)
-  }
 
-  class InMemoryStoreSpec extends DataStoreSpec with DataStoreBehaviors {
-    it should behave like datastore(new InMemoryStore())
+    "A put" should "return the json of the doc" in {
+      drop("put-happy")
+      val dbReturn = store.put(doc, "put-happy")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe doc
+      }
+    }
+
+    it should "fail for invalid json input" in {
+      drop("put-sad")
+      val dbReturn = store.put("{", "put-sad")
+      whenReady(dbReturn.failed) { e =>
+        e shouldBe a [Throwable]
+      }
+    }
+
+    "A put many" should "insert all docs" in {
+      drop("put-many")
+      Helpers.blockingCall(store.putMany(List(doc, doc), "put-many"))
+      val dbReturn = store.get("{}", "put-many")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe List(doc, doc)
+      }
+    }
+
+    "A get" should "should return the doc in json" in {
+      drop("get-happy")
+      Helpers.blockingCall(store.put(doc, "get-happy"))
+      val dbReturn = store.get(doc, "get-happy")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe List(doc)
+      }
+    }
+
+    it should "return empty list if doc not found" in {
+      drop("get-sad")
+      val dbReturn = store.get(doc, "get-sad")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe List[String]()
+      }
+    }
+
   }
 
 }

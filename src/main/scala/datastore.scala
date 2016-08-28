@@ -2,7 +2,10 @@ import scala.concurrent.{Future, Promise, ExecutionContext}
 import ExecutionContext.Implicits.global
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
-import org.mongodb.scala.{MongoClient, Observer, Completed, Document}
+import org.mongodb.scala.{
+  MongoClient, Observer, Completed, Document, BulkWriteResult
+}
+import org.mongodb.scala.model.{InsertOneModel, WriteModel}
 import scala.util.{Success, Failure}
 import json.JSON
 
@@ -10,6 +13,7 @@ package datastore {
 
   trait DataStore {
     def put(doc: String, table: String): Future[String]
+    def putMany(docs: List[String], table: String): Future[String]
     def get(query: String, table: String): Future[List[String]]
     def drop(table: String): Future[Unit]
   }
@@ -27,6 +31,24 @@ package datastore {
           override def onNext(r: Completed): Unit = { /* Logging */ }
           override def onError(e: Throwable): Unit = p.failure(e)
           override def onComplete(): Unit = p.success(doc)
+        })
+        p.future
+      }
+      catch {
+        case e: Any => { p.failure(e); p.future }
+      }
+    }
+    def putMany(docs: List[String], table: String) : Future[String] = {
+      val p = Promise[String]()
+      val coll = db.getCollection[Document](table)
+      try {
+        val ops = docs.map({(doc: String) =>
+          InsertOneModel(Document(doc)).asInstanceOf[WriteModel[Document]]
+        })
+        coll.bulkWrite(ops).subscribe(new Observer[BulkWriteResult] {
+          override def onNext(r: BulkWriteResult): Unit = { println(r) }
+          override def onError(e: Throwable): Unit = p.failure(e)
+          override def onComplete(): Unit = p.success("done")
         })
         p.future
       }
@@ -59,31 +81,6 @@ package datastore {
       })
       p.future
     }
-  }
-
-  // InMemoryStore stores in memory as a Map of strings to lists
-
-  class InMemoryStore extends DataStore {
-    val data = mutable.Map[String,MutableList[String]]()
-    def put(doc: String, table: String): Future[String] = {
-      val p = Promise[String]
-      try {
-        val jsonDoc = JSON.fromMap(JSON.toMap(doc))
-        data.getOrElseUpdate(table, MutableList[String]()) += jsonDoc
-        val p = Promise[String]
-        p.success(jsonDoc)
-        p.future
-      }
-      catch { case e: Any => { p.failure(e); return p.future } }
-    }
-    def get(query: String, table: String): Future[List[String]] = {
-      val p = Promise[List[String]]
-      val coll = data.getOrElseUpdate(table, MutableList[String]())
-      coll.filter({(ele: String) => ele == query})
-      p.success(coll.toList)
-      p.future
-    }
-    def drop(table: String) = Future { data.put(table, MutableList[String]()) }
   }
 
 }

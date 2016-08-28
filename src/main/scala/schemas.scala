@@ -27,6 +27,11 @@ package schemas {
       "querypattern" -> SchemaValue("class java.lang.String", true)
     ).asInstanceOf[Schema]
 
+    val pendingquery = Map[String, SchemaValue](
+      "querystring" -> SchemaValue("class java.lang.String", true),
+      "comic" -> SchemaValue("class java.lang.String", true)
+    ).asInstanceOf[Schema]
+
   }
 
   // note: determine whether these needs to be a case class
@@ -51,6 +56,10 @@ package schemas {
   class QueryPattern(
     private val json: String
   ) extends JsonSchemaEnforcer(json, Schemas.querypattern)
+
+  class PendingQuery(
+    private val json: String
+  ) extends JsonSchemaEnforcer(json, Schemas.pendingquery)
 
   class JsonSchemaEnforcer(
     private val json: String,

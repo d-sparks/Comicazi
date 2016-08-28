@@ -6,7 +6,7 @@ import scala.collection.mutable
 import scala.collection.mutable.MutableList
 import scala.concurrent.{Await, Future, Promise, ExecutionContext}
 import ExecutionContext.Implicits.global
-import datastore.InMemoryStore
+import datastore.MongoStore
 import endpoints.Endpoints
 import testhelpers.Helpers
 import schemas.Subscription
@@ -15,7 +15,7 @@ package endpoints {
 
   class EndpointsSpec extends FlatSpec with ScalaFutures with Matchers {
 
-    val db = new InMemoryStore()
+    val db = new MongoStore("localhost:27017", "comicazi-test-endpoints")
     val eps = new Endpoints(db)
     val comicJson = Helpers.ExampleComic.asJson()
     val subJson = Helpers.ExampleSubscription.asJson()
