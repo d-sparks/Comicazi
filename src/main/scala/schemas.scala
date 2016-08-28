@@ -18,10 +18,16 @@ package schemas {
 
     val subscription = comicTypes.mapValues({case (fType: String) =>
       SchemaValue(fType, false)
-    }).+((
-      "email",
-      SchemaValue("class java.lang.String", true)
+    }).++(Map[String, SchemaValue](
+      "email" -> SchemaValue("class java.lang.String", true),
+      "querypattern" -> SchemaValue("class java.lang.String", true)
     )).asInstanceOf[Schema]
+
+    // getKeys returns a string of the keys of the given json in alphabetical
+    // order.
+    def getKeys(json: String) = {
+      JSON.toMutableMap(json).keys.toList.sorted.mkString
+    }
 
   }
 
@@ -32,7 +38,10 @@ package schemas {
 
   class Subscription(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.comic)
+  ) extends JsonSchemaEnforcer(
+    JSON.extend(json, s"""{"querypattern":"${Schemas.getKeys(json)}"}"""),
+    Schemas.subscription
+  )
 
   class JsonSchemaEnforcer(
     private val json: String,

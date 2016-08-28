@@ -23,7 +23,8 @@ package testhelpers {
 
     val ExampleSubscription = new Example(mutable.Map[String,Any](
       "publisher" -> "Image",
-      "email" -> "amy@x.ai"
+      "email" -> "amy@x.ai",
+      "querypattern" -> "publisher"
     ))
 
     class Example(_data: mutable.Map[String,Any]) {
