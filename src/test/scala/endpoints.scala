@@ -9,7 +9,7 @@ import ExecutionContext.Implicits.global
 import datastore.MongoStore
 import endpoints.Endpoints
 import testhelpers.Helpers
-import schemas.{Subscription, QueryPattern, PendingQuery}
+import schemas._
 import json.Base64
 
 package endpoints {
@@ -43,6 +43,17 @@ package endpoints {
         val actualPq = new PendingQuery(dbOutput(0))
         val expectedPq = new PendingQuery("""{"publisher":"DC"}""", comicJson)
         actualPq.toJson shouldBe expectedPq.toJson
+      }
+    }
+
+    it should "create a notificationjob" in {
+      Helpers.blockingCall(db.drop("notificationjobs"))
+      Helpers.blockingCall(eps.postComic(comicRequest))
+      val dbReturn = db.get("{}", "notificationjobs")
+      whenReady(dbReturn) { dbOutput =>
+        val actualNj = new NotificationJob(dbOutput(0))
+        val expectedNj = new NotificationJob(comicJson, 1)
+        actualNj.toJson shouldBe expectedNj.toJson
       }
     }
 

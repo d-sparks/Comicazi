@@ -14,7 +14,9 @@ package endpoints {
     def postComic(request: HttpRequest) : Future[String] = {
       val body = request.body.toString()
       val comic = new Comic(body).toJson()
+      // * STEP 1 * find all QueryPattern's
       datastore.get("{}", "querypatterns").flatMap { querypatterns =>
+      // * STEP 2 * create relevant PendingQuery's
         val pqs = MutableList[PendingQuery]()
         for (querypattern <- querypatterns) {
           val qp = new QueryPattern(querypattern)
@@ -38,6 +40,11 @@ package endpoints {
           datastore.ping()
         }
       }.flatMap { _ =>
+      // * STEP 3 * create a notification job
+        val nj = new NotificationJob(comic, 1)
+        datastore.put(nj.toJson, "notificationjobs")
+      }.flatMap { _ =>
+      // * STEP 4 * add the comic to inventory
         datastore.put(comic, "comics")
       }
     }

@@ -27,14 +27,20 @@ package schemas {
       "querypattern" -> SchemaValue("class java.lang.String", true)
     ).asInstanceOf[Schema]
 
+    // Note: affix B64 to field names
     val pendingquery = Map[String, SchemaValue](
       "querystring" -> SchemaValue("class java.lang.String", true),
       "comic" -> SchemaValue("class java.lang.String", true)
     ).asInstanceOf[Schema]
 
+    // Note: affix B64 to "comic" field
+    val notificationjob = Map[String, SchemaValue](
+      "comic" -> SchemaValue("class java.lang.String", true),
+      "handler" -> SchemaValue("class java.lang.Integer", true)
+    )
+
   }
 
-  // note: determine whether these needs to be a case class
   class Comic(
     private val json: String
   ) extends JsonSchemaEnforcer(json, Schemas.comic)
@@ -64,6 +70,17 @@ package schemas {
       val qs = Base64.encode(querystring)
       val c = Base64.encode(comicJson)
       s"""{"querystring":"${qs}","comic":"${c}"}"""
+    })
+  }
+
+  class NotificationJob(
+    private val json: String
+  ) extends JsonSchemaEnforcer(json, Schemas.notificationjob) {
+    def this(comicJson: String, handler: Int) = this({
+      JSON.fromMap(Map[String, Any](
+        "comic" -> Base64.encode(comicJson),
+        "handler" -> handler
+      ))
     })
   }
 
