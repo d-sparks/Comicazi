@@ -10,7 +10,7 @@ package datastore {
 
   trait DataStore {
     def put(doc: String, table: String): Future[String]
-    def get(query: String, table: String): Future[String]
+    def get(query: String, table: String): Future[List[String]]
     def drop(table: String): Future[Unit]
   }
 
@@ -30,17 +30,21 @@ package datastore {
         })
         p.future
       }
-      catch { case e: Any => { p.failure(e); return p.future } }
+      catch {
+        case e: Any => { p.failure(e); p.future }
+      }
     }
-    def get(query: String, table: String) : Future[String] = {
-      val p = Promise[String]
+    def get(query: String, table: String) : Future[List[String]] = {
+      val p = Promise[List[String]]
       val coll = db.getCollection[Document](table)
       val bsonQuery = Document(query).toBsonDocument
       val dbResult = coll.find(bsonQuery).toFuture()
       dbResult.onComplete {
-        case Success(r) => { p.success(
-          if(r.length > 0) r(0).toJson() else ""
-        )}
+        case Success(r) => p.success(
+          r.map({(res: Document) =>
+            JSON.filterFields(res.toJson(), List("_id"))
+          }).toList
+        )
         case Failure(e) => p.failure(e)
       }
       p.future
@@ -72,10 +76,11 @@ package datastore {
       }
       catch { case e: Any => { p.failure(e); return p.future } }
     }
-    def get(query: String, table: String): Future[String] = {
-      val p = Promise[String]
-      val in = data.getOrElseUpdate(table, MutableList[String]()).contains(query)
-      p.success(if(in) query else "")
+    def get(query: String, table: String): Future[List[String]] = {
+      val p = Promise[List[String]]
+      val coll = data.getOrElseUpdate(table, MutableList[String]())
+      coll.filter({(ele: String) => ele == query})
+      p.success(coll.toList)
       p.future
     }
     def drop(table: String) = Future { data.put(table, MutableList[String]()) }

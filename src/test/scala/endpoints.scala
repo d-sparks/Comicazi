@@ -28,16 +28,7 @@ package endpoints {
       // If the API had a get method, would prefer to test post/get
       val dbReturn = db.get(comicJson, "comics")
       whenReady(dbReturn) { dbOutput =>
-        dbOutput shouldBe comicJson
-      }
-    }
-
-    it should "fail for an existing comic" in {
-      Helpers.blockingCall(db.drop("comics"))
-      Helpers.blockingCall(eps.postComic(comicRequest))
-      val endpointReturn = eps.postComic(comicRequest)
-      whenReady(endpointReturn.failed) { e =>
-        e shouldBe an [Exception]
+        dbOutput(0) shouldBe comicJson
       }
     }
 
@@ -46,7 +37,7 @@ package endpoints {
       Helpers.blockingCall(eps.postSubscription(subRequest))
       val subReturn = db.get(subJson, "subscriptions")
       whenReady(subReturn) { dbOutput =>
-        dbOutput shouldBe subJson
+        dbOutput(0) shouldBe subJson
       }
     }
 
@@ -57,7 +48,7 @@ package endpoints {
       val qpJson = s"""{"querypattern":"${sub.querypattern}"}"""
       val qpReturn = db.get(qpJson, "querypatterns")
       whenReady(qpReturn) { dbOutput =>
-        dbOutput shouldBe qpJson
+        dbOutput(0) shouldBe qpJson
       }
     }
 

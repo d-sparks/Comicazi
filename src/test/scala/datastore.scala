@@ -38,8 +38,7 @@ package datastore {
         Helpers.blockingCall(store.put(doc, "get-happy"))
         val dbReturn = store.get(doc, "get-happy")
         whenReady(dbReturn) { dbOutput =>
-          val filtered = JSON.filterFields(dbOutput, List("_id"))
-          filtered shouldBe doc
+          dbOutput shouldBe List(doc)
         }
       }
 
@@ -47,7 +46,7 @@ package datastore {
         drop("get-sad")
         val dbReturn = store.get(doc, "get-sad")
         whenReady(dbReturn) { dbOutput =>
-          dbOutput shouldBe ""
+          dbOutput shouldBe List[String]()
         }
       }
 
