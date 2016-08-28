@@ -30,6 +30,9 @@ package endpoints {
           (pq: PendingQuery) => pq.toJson()
         })
         if (pqsJson.length > 0) {
+          // This will resolve as a BulkWriteException if there are any errors,
+          // maybe we can check if the only errors were duplicate key errors,
+          // and if so, continue.
           datastore.putMany(pqsJson.toList, "pendingqueries")
         } else {
           datastore.ping()
