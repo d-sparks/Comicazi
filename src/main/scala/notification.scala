@@ -20,6 +20,9 @@ package notification {
       tasks: List[() => Future[T]],
       results: List[Boolean]
     ) : Unit = {
+      if(tasks.length == 0) {
+        return p.success(List[Boolean]())
+      }
       def nextOrSucceed(result: Boolean) = {
         if(i == tasks.length - 1) {
           p.success(results ++ List(result))

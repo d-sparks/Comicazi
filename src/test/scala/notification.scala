@@ -70,11 +70,14 @@ package notification {
     // beautiful tests which test that each concurrent step behaves as
     // intended and "does the rest", but it would cost a decent amount of work.
 
-    def setUpFakeData() {
+    def dropFakeData() {
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(db.drop("querypatterns"))
       Helpers.blockingCall(db.drop("pendingqueries"))
       Helpers.blockingCall(db.drop("pendingnotifications"))
+    }
+    def setUpFakeData() {
+      dropFakeData()
       Helpers.blockingCall(db.put(
         Helpers.ExampleSubscription.asJson(),
         "subscriptions"
@@ -101,6 +104,16 @@ package notification {
       Helpers.blockingCall(njWorker.lookForJob())
       val pqs = db.get("{}", "pendingqueries")
       whenReady(pqs) { results =>
+        results shouldBe List[String]()
+      }
+    }
+
+    it should "not create pendingnotifications unless ∃ pendingqueries" in {
+      setUpFakeData()
+      Helpers.blockingCall(db.remove("{}", "pendingqueries"))
+      Helpers.blockingCall(njWorker.lookForJob())
+      val pns = db.get("{}", "pendingnotifications")
+      whenReady(pns) { results =>
         results shouldBe List[String]()
       }
     }
