@@ -6,6 +6,7 @@ import org.mongodb.scala.{
   MongoClient, Observer, Completed, Document, BulkWriteResult
 }
 import org.mongodb.scala.model.{InsertOneModel, WriteModel}
+import com.mongodb.client.result.DeleteResult
 import scala.util.{Success, Failure}
 import json.JSON
 
@@ -16,6 +17,7 @@ package datastore {
     def putMany(docs: List[String], table: String): Future[String]
     def get(query: String, table: String): Future[List[String]]
     def drop(table: String): Future[Unit]
+    def remove(doc: String, table: String): Future[String]
     def ping(): Future[Boolean]
   }
 
@@ -82,6 +84,24 @@ package datastore {
       })
       p.future
     }
+    def remove(doc: String, table: String) : Future[String] = {
+      val client = MongoClient("mongodb://localhost:27017")
+      val db = client.getDatabase(mongoDb)
+      val p = Promise[String]()
+      val coll = db.getCollection[Document](table)
+      try {
+        coll.deleteMany(Document(doc)).subscribe(new Observer[DeleteResult] {
+          override def onNext(r: DeleteResult): Unit = { /* Logging */ }
+          override def onError(e: Throwable): Unit = p.failure(e)
+          override def onComplete(): Unit = p.success("success")
+        })
+        p.future
+      }
+      catch {
+        case e: Any => { p.failure(e); p.future }
+      }
+    }
+
     def ping() : Future[Boolean] = {
       // This is a hack; the MongoScalaDriver doesn't have a ping method (for
       // shame!), from http://stackoverflow.com/questions/6832517/how-to-check-

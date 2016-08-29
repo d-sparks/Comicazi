@@ -41,7 +41,11 @@ package notification {
       p.future
     }
 
-    def matchesHandler(qs: String, comic: String)(matches: List[String]) = {
+    def matchesHandler(
+      pq: PendingQuery,
+      qs: String,
+      comic: String
+    )(matches: List[String]) = {
       val pns = matches.map { case(subJson: String) =>
         val subscription = new Subscription(subJson)
         val email = subscription.toMap.get("email") match {
@@ -52,19 +56,25 @@ package notification {
         val pnJson = s"""{"email":"${email}","comic":"${comicB64}"}"""
         new PendingNotification(pnJson).toJson
       }.toList
-      db.putMany(pns, "pendingnotifications")
+      (if (pns.length > 0) {
+        db.putMany(pns, "pendingnotifications")
+      } else {
+        db.ping() map { _ => "no matches, db OK" }
+      }) flatMap { _ =>
+        db.remove(pq.toJson, "pendingqueries")
+      }
     }
 
     def handlePendingQueries(comic: String)(pendingQueries: List[String]) = {
       val queryHandlers = pendingQueries.map { case(pqJson: String) =>
         {() => {
-          val pqMap = new PendingQuery(pqJson).toMap()
-          val qsB64 = pqMap.get("querystring") match {
+          val pq = new PendingQuery(pqJson)
+          val qsB64 = pq.toMap.get("querystring") match {
             case Some(qs) => qs.asInstanceOf[String]
             case None => "definitely not a false positive"
           }
           val qs = Base64.decode(qsB64)
-          db.get(qs, "subscriptions") flatMap matchesHandler(qs, comic)
+          db.get(qs, "subscriptions") flatMap matchesHandler(pq, qs, comic)
         }}
       }
       val p = Promise[List[Boolean]]
