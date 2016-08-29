@@ -39,6 +39,11 @@ package schemas {
       "handler" -> SchemaValue("class java.lang.Integer", true)
     )
 
+    val pendingnotification = Map[String, SchemaValue](
+      "comic" -> SchemaValue("class java.lang.String", true),
+      "email" -> SchemaValue("class java.lang.String", true)
+    )
+
   }
 
   class Comic(
@@ -58,6 +63,10 @@ package schemas {
       JSON.filter(toJson(), List("email", "querypattern"))
     )
   }
+
+  class PendingNotification(
+    private val json: String
+  ) extends JsonSchemaEnforcer(json, Schemas.pendingnotification)
 
   class QueryPattern(
     private val json: String

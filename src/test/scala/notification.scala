@@ -6,10 +6,15 @@ import scala.concurrent.{Future, Promise} // ExecutionContext
 import scala.collection.mutable.MutableList
 import datastore.MongoStore
 import notification.NjWorker
+import schemas.{NotificationJob, PendingQuery}
+import testhelpers.Helpers
+import json.{JSON, Base64}
 
 package notification {
 
-  class NjWorkerSpec extends FlatSpec with ScalaFutures with Matchers {
+  class NotificationSpec extends FlatSpec with Matchers
+
+  class NjWorkerSpec extends NotificationSpec with ScalaFutures {
      implicit val sys = ActorSystem()
      implicit val defaultPatience = PatienceConfig(
        timeout = Span(10, Seconds),
@@ -55,9 +60,35 @@ package notification {
         () => {val p = Promise[Unit]; p.success(); p.future}
       }).toList
       val p = Promise[List[Boolean]]
-      njWorker.sequentially[Unit](p, 0, lambdas, List[Boolean]())
+      njWorker.sequentially(p, 0, lambdas, List[Boolean]())
       whenReady(p.future) { results =>
         results.length shouldBe 10000
+      }
+    }
+
+    // Note: Using traits and `should behave like`, one could have very
+    // beautiful tests which test that each concurrent step behaves as
+    // intended and "does the rest", but it would cost a decent amount of work.
+
+    "look for a job" should "make pending notifications" in {
+      Helpers.blockingCall(db.drop("subscriptions"))
+      Helpers.blockingCall(db.drop("querypatterns"))
+      Helpers.blockingCall(db.drop("pendingqueries"))
+      Helpers.blockingCall(db.drop("pendingnotifications"))
+      Helpers.blockingCall(db.put(
+        Helpers.ExampleSubscription.asJson(),
+        "subscriptions"
+      ))
+      val comicJson = Helpers.ExampleComic.asJson()
+      val querystring = JSON.project(comicJson, List("publisher"))
+      val pq = new PendingQuery(querystring, comicJson)
+      Helpers.blockingCall(db.put(pq.toJson(), "pendingqueries"))
+      val nj = new NotificationJob(comicJson, 1)
+      Helpers.blockingCall(db.put(nj.toJson(), "notificationjobs"))
+      Helpers.blockingCall(njWorker.lookForJob())
+      val pns = db.get("{}", "pendingnotifications")
+      whenReady(pns) { results =>
+        results.length shouldBe 1
       }
     }
 

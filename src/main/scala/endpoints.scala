@@ -11,6 +11,8 @@ package endpoints {
 
   class Endpoints(datastore: DataStore) {
 
+    // todo: break the flatmaps up into individual functions
+    // also: all of this logic should be in the notification worker
     def postComic(request: HttpRequest) : Future[String] = {
       val body = request.body.toString()
       val comic = new Comic(body).toJson()
