@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import akka.actor._
 import endpoints._
 import datastore._
-import notification.NjWorker
+import notification.NjActor
 
 class Comicazi(
   context: ServerContext,
@@ -42,7 +42,7 @@ object Main extends App {
   }
 
   // Start the notification actor
-  val njWorker = sys.actorOf(Props(new NjWorker(store, 1)))
+  val njWorker = sys.actorOf(Props(new NjActor(store, 1)))
   sys.scheduler.schedule(
     5 seconds,
     5 seconds,
