@@ -48,7 +48,10 @@ package schemas {
 
   class Comic(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.comic)
+  ) extends JsonSchemaEnforcer(json, Schemas.comic) {
+    def toB64() = Base64.encode(toJson())
+    def toB64Qry() = s"""{"comic":"${toB64()}"}"""
+  }
 
   class Subscription(
     private val json: String
