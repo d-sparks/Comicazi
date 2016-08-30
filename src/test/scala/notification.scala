@@ -6,7 +6,7 @@ import scala.concurrent.{Future, Promise} // ExecutionContext
 import scala.collection.mutable.MutableList
 import datastore.MongoStore
 import notification.NjWorker
-import schemas.{NotificationJob, PendingQuery}
+import schemas.{NotificationJob, PendingQuery, Subscription, Comic}
 import testhelpers.Helpers
 import json.{JSON, Base64}
 
@@ -70,6 +70,13 @@ package notification {
     // beautiful tests which test that each concurrent step behaves as
     // intended and "does the rest", but it would cost a decent amount of work.
 
+    val subscription = new Subscription(
+      Helpers.ExampleSubscription.asJson
+    )
+    val comic = new Comic(
+      Helpers.ExampleComic.asJson
+    )
+
     def dropFakeData() {
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(db.drop("querypatterns"))
@@ -78,15 +85,11 @@ package notification {
     }
     def setUpFakeData() {
       dropFakeData()
-      Helpers.blockingCall(db.put(
-        Helpers.ExampleSubscription.asJson(),
-        "subscriptions"
-      ))
-      val comicJson = Helpers.ExampleComic.asJson()
-      val querystring = JSON.project(comicJson, List("publisher"))
-      val pq = new PendingQuery(querystring, comicJson)
+      Helpers.blockingCall(db.put(subscription.toJson, "subscriptions"))
+      val querystring = JSON.project(comic.toJson, List("publisher"))
+      val pq = new PendingQuery(querystring, comic.toJson)
       Helpers.blockingCall(db.put(pq.toJson(), "pendingqueries"))
-      val nj = new NotificationJob(comicJson, 1)
+      val nj = new NotificationJob(comic.toJson, 1)
       Helpers.blockingCall(db.put(nj.toJson(), "notificationjobs"))
     }
 
@@ -115,6 +118,23 @@ package notification {
       val pns = db.get("{}", "pendingnotifications")
       whenReady(pns) { results =>
         results shouldBe List[String]()
+      }
+    }
+
+    "checkPqsSuccess" should "fail if any PendingQuery failed" in {
+      val f = njWorker.checkPqsSuccess(comic)(List(true, false, true))
+      whenReady(f.failed) { e =>
+        e shouldBe a [Throwable]
+        e.getMessage shouldBe "A query pattern failed"
+      }
+    }
+
+    "checkPqsExhaustive" should "fail if ∃ PendingQueries" in {
+      setUpFakeData()
+      val f = njWorker.checkPqsExhaustive(comic)()
+      whenReady(f.failed) { e =>
+        e shouldBe a [Throwable]
+        e.getMessage shouldBe "PendingQuery remaining"
       }
     }
 

@@ -7,13 +7,18 @@ import schemas.{
   NotificationJob,
   PendingQuery,
   PendingNotification,
-  Subscription
+  Subscription,
+  Comic
 }
-import json.Base64
+import json.{Base64, JSON}
 
 package notification {
 
   class NjWorker(db: DataStore, n: Int) {
+
+    def thr(msg: String) = new Throwable(msg)
+    def jseThr(culprit: String) = thr("JsonSchemaEnforcer fail: " + culprit)
+
     def sequentially[T](
       p: Promise[List[Boolean]],
       i: Int,
@@ -37,64 +42,92 @@ package notification {
       }
     }
 
-    def beginNotifying(comic: String)(pqSuccesses: List[Boolean]) = {
+    // def makeNotifyTask(pn: String) = {
+    //   () => {
+
+    //   }
+    // }
+
+    // def notifyNAtATime(p: Promise[Unit], comic: Comic, n: Int) = {
+
+    // }
+
+    def beginNotifying(comic: Comic)(x: Unit) = {
+      // Want to do this: find first 100, do something, repeat
+      // temp:
       val p = Promise[Unit]
-      // Temporary:
       p.success()
       p.future
     }
 
+    def checkPqsExhaustive(comic: Comic)(x: Unit) = {
+      val p = Promise[Unit]
+      db.get(comic.toB64Qry, "pendingqueries") map { results =>
+        if(results.length == 0) {
+          p.success("success")
+        } else {
+          p.failure(thr("PendingQuery remaining"))
+        }
+      }
+      p.future flatMap beginNotifying(comic)
+    }
+
+    def checkPqsSuccess(comic: Comic)(pqSuccesses: List[Boolean]) = {
+      val p = Promise[Unit]
+      if(pqSuccesses.contains(false)) {
+        p.failure(thr("A query pattern failed"))
+        p.future
+      } else {
+        p.success()
+        p.future flatMap checkPqsExhaustive(comic)
+      }
+    }
+
     def matchesHandler(
       pq: PendingQuery,
-      qs: String,
-      comic: String
+      comic: Comic
     )(matches: List[String]) = {
       val pns = matches.map { case(subJson: String) =>
         val subscription = new Subscription(subJson)
         val email = subscription.toMap.get("email") match {
-          case Some(subEmail) => subEmail
-          case None => "invalidemail"
+          case Some(subEmail) => subEmail.asInstanceOf[String]
+          case None => throw jseThr("Subscription")
         }
-        val comicB64 = Base64.encode(comic)
-        val pnJson = s"""{"email":"${email}","comic":"${comicB64}"}"""
-        new PendingNotification(pnJson).toJson
+        val pnJson = JSON.extend(comic.toB64Qry, s"""{"email":"${email}"}""")
+        new PendingNotification(pnJson).toJson()
       }.toList
-      (if (pns.length > 0) {
-        db.putMany(pns, "pendingnotifications")
-      } else {
-        db.ping() map { _ => "no matches, db OK" }
-      }) flatMap { _ =>
+      db.putMany(pns, "pendingnotifications") flatMap { _ =>
         db.remove(pq.toJson, "pendingqueries")
       }
     }
 
-    def handlePendingQueries(comic: String)(pendingQueries: List[String]) = {
-      val queryHandlers = pendingQueries.map { case(pqJson: String) =>
+    def handlePendingQueries(comic: Comic)(pqs: List[String]) = {
+      val queryHandlers = pqs.map { case(pqJson: String) =>
         {() => {
           val pq = new PendingQuery(pqJson)
           val qsB64 = pq.toMap.get("querystring") match {
-            case Some(qs) => qs.asInstanceOf[String]
-            case None => "definitely not a false positive"
+            case Some(str) => str.asInstanceOf[String]
+            case None => throw jseThr("PendingQuery")
           }
           val qs = Base64.decode(qsB64)
-          db.get(qs, "subscriptions") flatMap matchesHandler(pq, qs, comic)
+          db.get(qs, "subscriptions") flatMap matchesHandler(pq, comic)
         }}
       }
       val p = Promise[List[Boolean]]
       sequentially(p, 0, queryHandlers, List[Boolean]())
-      p.future flatMap beginNotifying(comic)
+      p.future flatMap checkPqsSuccess(comic)
     }
 
     def performJob(jobs: List[String]) = {
-      if(jobs.size < 1) { throw new Throwable("No jobs") }
+      if(jobs.size < 1) { throw thr("No jobs") }
       val job = new NotificationJob(jobs(0))
       val comicB64 = job.toMap.get("comic") match {
         case Some(comic) => comic.asInstanceOf[String]
-        case None =>
-          throw new Throwable("JsonSchemaEnforcer failure: NotificationJob")
+        case None => throw jseThr("NotificationJob")
       }
-      val pendingQueries = db.get(s"""{"comic":"${comicB64}"}""", "pendingqueries")
-      pendingQueries flatMap handlePendingQueries(Base64.decode(comicB64))
+      val comic = new Comic(Base64.decode(comicB64))
+      val pqs = db.get(comic.toB64Qry, "pendingqueries")
+      pqs flatMap handlePendingQueries(comic)
     }
 
     def lookForJob() = {
