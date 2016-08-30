@@ -21,10 +21,36 @@ package testhelpers {
       "mint" -> true
     ))
 
+    val ExampleComic2 = new Example(mutable.Map[String,Any](
+      "publisher" -> "Marvel",
+      "year" -> 1986,
+      "mint" -> false
+    ))
+
     val ExampleSubscription = new Example(mutable.Map[String,Any](
       "publisher" -> "DC",
       "email" -> "amy@x.ai",
       "querypattern" -> "publisher"
+    ))
+
+    val ExampleSubscription2 = new Example(mutable.Map[String,Any](
+      "mint" -> true,
+      "email" -> "amy@x.ai",
+      "querypattern" -> "mint"
+    ))
+
+    val ExampleSubscription3 = new Example(mutable.Map[String,Any](
+      "publisher" -> "Marvel",
+      "year" -> 1986,
+      "mint" -> false,
+      "email" -> "dan.sparks@humans.x.ai",
+      "querypattern" -> "publisher,year,mint"
+    ))
+
+    val ExampleSubscription4 = new Example(mutable.Map[String, Any](
+      "year" -> 1984,
+      "email" -> "orwell@dystop.ia",
+      "querypattern" -> "year"
     ))
 
     class Example(_data: mutable.Map[String,Any]) {

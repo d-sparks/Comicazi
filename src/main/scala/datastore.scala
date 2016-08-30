@@ -20,6 +20,7 @@ package datastore {
     def drop(table: String): Future[Unit]
     def remove(doc: String, table: String): Future[String]
     def ping(): Future[Boolean]
+    def close(): Unit
   }
 
   // MongoStore uses MongoDB as a DataStore
@@ -102,7 +103,6 @@ package datastore {
         case e: Any => { p.failure(e); p.future }
       }
     }
-
     def ping() : Future[Boolean] = {
       // This is a hack; the MongoScalaDriver doesn't have a ping method (for
       // shame!), from http://stackoverflow.com/questions/6832517/how-to-check-
@@ -110,6 +110,9 @@ package datastore {
       get("""{"do":"i exist?"}""", "reality").map { _ =>
         true
       }
+    }
+    def close() = {
+      client.close()
     }
   }
 

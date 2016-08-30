@@ -54,13 +54,14 @@ package notification {
           case Some(str) => str.asInstanceOf[String]
           case None => throw jseThr("PendingNotification")
         }
-        // For some reason these don't print, even though the code is
-        // executing.
-        // println("----------------------------------")
-        // println(s"Notification for: ${email}")
-        // println("A new comic you may be interested in:")
-        // println(comic.toJson)
-        // println("----------------------------------")
+        // These don't print when the program is being run even though the code
+        // is executing, should investigate why. They do print from the tests,
+        // however.
+        println("----------------------------------")
+        println(s"Notification for: ${email}")
+        println("A new comic you may be interested in:")
+        println(comic.toJson)
+        println("----------------------------------")
         // Here we would actually send the email, and flatmap it to this, thus
         // only putting the notification into our historical records if the
         // email was successful.
