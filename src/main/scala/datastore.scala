@@ -62,22 +62,18 @@ package datastore {
       }
     }
     def get(query: String, table: String) : Future[List[String]] = {
-      val p = Promise[List[String]]
-      val coll = db.getCollection[Document](table)
-      val bsonQuery = Document(query).toBsonDocument
-      val dbResult = coll.find(bsonQuery).toFuture()
-      dbResult.onComplete {
-        case Success(r) => p.success(
-          r.map({(res: Document) =>
-            JSON.filter(res.toJson(), List("_id"))
-          }).toList
-        )
-        case Failure(e) => p.failure(e)
-      }
-      p.future
+      getN(-1, query, table)
     }
     def getN(n: Int, query: String, table: String) : Future[List[String]] = {
-      get(query, table)
+      val coll = db.getCollection[Document](table)
+      val bsonQuery = Document(query).toBsonDocument
+      var find = coll.find(bsonQuery)
+      if(n > 0) find = find.limit(n)
+      find.toFuture() map { results =>
+        results.map({(res: Document) =>
+          JSON.filter(res.toJson(), List("_id"))
+        }).toList
+      }
     }
     def drop(table: String) : Future[Unit] = {
       val p = Promise[Unit]

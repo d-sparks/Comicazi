@@ -12,6 +12,8 @@ package datastore {
 
   class MongoStoreSpec extends FlatSpec with ScalaFutures with Matchers {
     val doc = """{"a":"b"}"""
+    val doc2 = """{"c":"d"}"""
+
     def drop(table: String) = Helpers.blockingCall(store.drop(table))
 
     // Because Circle.ci is slow
@@ -51,10 +53,13 @@ package datastore {
 
     "A get" should "should return the doc in json" in {
       drop("get-happy")
+      Helpers.blockingCall(store.put(doc2, "get-happy"))
+      Helpers.blockingCall(store.put(doc, "get-happy"))
+      Helpers.blockingCall(store.put(doc, "get-happy"))
       Helpers.blockingCall(store.put(doc, "get-happy"))
       val dbReturn = store.get(doc, "get-happy")
       whenReady(dbReturn) { dbOutput =>
-        dbOutput shouldBe List(doc)
+        dbOutput shouldBe List(doc, doc, doc)
       }
     }
 
@@ -63,6 +68,28 @@ package datastore {
       val dbReturn = store.get(doc, "get-sad")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe List[String]()
+      }
+    }
+
+    "A getN" should "return only n matching documents" in {
+      drop("getN-happy")
+      Helpers.blockingCall(store.put(doc2, "getN-happy"))
+      Helpers.blockingCall(store.put(doc, "getN-happy"))
+      Helpers.blockingCall(store.put(doc, "getN-happy"))
+      Helpers.blockingCall(store.put(doc, "getN-happy"))
+      val dbReturn = store.getN(2, doc, "getN-happy")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe List(doc, doc)
+      }
+    }
+
+    it should "return < n matches if not exhaustive" in {
+      drop("getN-content")
+      Helpers.blockingCall(store.put(doc2, "getN-content"))
+      Helpers.blockingCall(store.put(doc, "getN-content"))
+      val dbReturn = store.getN(2, doc, "getN-content")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe List(doc)
       }
     }
 
