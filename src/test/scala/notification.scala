@@ -82,6 +82,7 @@ package notification {
       Helpers.blockingCall(db.drop("querypatterns"))
       Helpers.blockingCall(db.drop("pendingqueries"))
       Helpers.blockingCall(db.drop("pendingnotifications"))
+      Helpers.blockingCall(db.drop("notifications"))
     }
     def setUpFakeData() {
       dropFakeData()
@@ -93,10 +94,10 @@ package notification {
       Helpers.blockingCall(db.put(nj.toJson(), "notificationjobs"))
     }
 
-    "look for a job" should "make pending notifications" in {
+    "look for a job" should "make notifications" in {
       setUpFakeData()
       Helpers.blockingCall(njWorker.lookForJob())
-      val pns = db.get("{}", "pendingnotifications")
+      val pns = db.get("{}", "notifications")
       whenReady(pns) { results =>
         results.length shouldBe 1
       }

@@ -26,7 +26,8 @@ package notification {
       results: List[Boolean]
     ) : Unit = {
       if(tasks.length == 0) {
-        return p.success(List[Boolean]())
+        p.success(List[Boolean]())
+        return
       }
       def nextOrSucceed(result: Boolean) = {
         if(i == tasks.length - 1) {
@@ -42,34 +43,70 @@ package notification {
       }
     }
 
-    // def makeNotifyTask(pn: String) = {
-    //   () => {
+    def makeNotifyTask(comic: Comic)(pnJson: String) = {
+      () => {
+        // Send an email, but as a proxy, we place a notification into the
+        // notifications collection, and so that there's some output, we'll
+        // print the notification to the console:
+        val p = Promise[String]
+        val pn = new PendingNotification(pnJson)
+        val email = pn.toMap.get("email") match {
+          case Some(str) => str.asInstanceOf[String]
+          case None => throw jseThr("PendingNotification")
+        }
+        // For some reason these don't print, even though the code is
+        // executing.
+        // println("----------------------------------")
+        // println(s"Notification for: ${email}")
+        // println("A new comic you may be interested in:")
+        // println(comic.toJson)
+        // println("----------------------------------")
+        // Here we would actually send the email, and flatmap it to this, thus
+        // only putting the notification into our historical records if the
+        // email was successful.
+        db.put(pn.toJson, "notifications") flatMap { _ =>
+          db.remove(pn.toJson, "pendingnotifications")
+        }
+      }
+    }
 
-    //   }
-    // }
+    // Note: this could go infinite if a PendingNotification's notifyTask
+    // cannot be completed ever.
+    def notifyNAtATime(p: Promise[Unit], comic: Comic, n: Int) : Unit = {
+      val f = db.getN(n, comic.toB64Qry, "pendingnotifications")
+      f.onComplete {
+        case Success(results) => {
+          if(results.length == 0) {
+            p.success()
+          } else {
+            val q = Promise[List[Boolean]]
+            val notifyTasks = results.map(makeNotifyTask(comic))
+            sequentially(q, 0, notifyTasks, List[Boolean]())
+            q.future map { _ => notifyNAtATime(p, comic, n)}
+          }
+        }
+        case Failure(_) => p.failure(thr("Database failure"))
+      }
+    }
 
-    // def notifyNAtATime(p: Promise[Unit], comic: Comic, n: Int) = {
-
-    // }
-
-    def beginNotifying(comic: Comic)(x: Unit) = {
-      // Want to do this: find first 100, do something, repeat
-      // temp:
+    def notify(comic: Comic)(x: Unit) = {
       val p = Promise[Unit]
-      p.success()
-      p.future
+      notifyNAtATime(p, comic, 50)
+      p.future flatMap {_ =>
+        db.remove(comic.toB64Qry, "notificationjobs")
+      }
     }
 
     def checkPqsExhaustive(comic: Comic)(x: Unit) = {
       val p = Promise[Unit]
       db.get(comic.toB64Qry, "pendingqueries") map { results =>
         if(results.length == 0) {
-          p.success("success")
+          p.success()
         } else {
           p.failure(thr("PendingQuery remaining"))
         }
       }
-      p.future flatMap beginNotifying(comic)
+      p.future flatMap notify(comic)
     }
 
     def checkPqsSuccess(comic: Comic)(pqSuccesses: List[Boolean]) = {

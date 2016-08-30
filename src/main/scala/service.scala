@@ -19,6 +19,9 @@ class Comicazi(
     case req @ Post on Root / "comics" => {
       Callback.fromFuture(eps.postComic(req)).map { r => req.ok(r) }
     }
+    case req @ Post on Root / "subscriptions" => {
+      Callback.fromFuture(eps.postSubscription(req)).map { r => req.ok(r) }
+    }
   }
 }
 

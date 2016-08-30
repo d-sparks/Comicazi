@@ -16,6 +16,7 @@ package datastore {
     def put(doc: String, table: String): Future[String]
     def putMany(docs: List[String], table: String): Future[String]
     def get(query: String, table: String): Future[List[String]]
+    def getN(n: Int, query: String, table: String): Future[List[String]]
     def drop(table: String): Future[Unit]
     def remove(doc: String, table: String): Future[String]
     def ping(): Future[Boolean]
@@ -74,6 +75,9 @@ package datastore {
         case Failure(e) => p.failure(e)
       }
       p.future
+    }
+    def getN(n: Int, query: String, table: String) : Future[List[String]] = {
+      get(query, table)
     }
     def drop(table: String) : Future[Unit] = {
       val p = Promise[Unit]
