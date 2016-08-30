@@ -43,6 +43,7 @@ package datastore {
     }
     def putMany(docs: List[String], table: String) : Future[String] = {
       val p = Promise[String]()
+      if(docs.length == 0) { p.success(""); return p.future }
       val coll = db.getCollection[Document](table)
       try {
         val ops = docs.map({(doc: String) =>
