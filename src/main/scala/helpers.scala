@@ -6,6 +6,7 @@ import ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import sun.misc.{BASE64Encoder, BASE64Decoder}
 import scala.collection._
+import org.mongodb.scala.Document
 
 package helpers {
 
@@ -46,6 +47,10 @@ package helpers {
     private val decoder = new BASE64Decoder()
     def encode(s: String) = encoder.encode(s.toCharArray.map(_.toByte))
     def decode(s: String) = new String(decoder.decodeBuffer(s).map(_.toChar))
+  }
+
+  object BSON {
+    def fromMap(m: Map[String, Any]) = Document(JSON.fromMap(m)).toBsonDocument
   }
 
   object Async {
