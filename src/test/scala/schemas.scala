@@ -1,7 +1,7 @@
 import org.scalatest.{FlatSpec, Matchers}
 import schemas.Comic
 import scala.util.control.Breaks.{break, breakable}
-import json.JSON
+import helpers.JSON
 import testhelpers.Helpers.ExampleComic
 import schemas._
 import schemas.Schemas.{Schema, SchemaValue}

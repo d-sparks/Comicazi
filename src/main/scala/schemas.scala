@@ -1,4 +1,4 @@
-import json.{JSON, Base64}
+import helpers.{JSON, Base64}
 
 package schemas {
 

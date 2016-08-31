@@ -8,7 +8,7 @@ import org.mongodb.scala.{
 import org.mongodb.scala.model.{InsertOneModel, WriteModel}
 import com.mongodb.client.result.DeleteResult
 import scala.util.{Success, Failure}
-import json.JSON
+import helpers.JSON
 
 package datastore {
 

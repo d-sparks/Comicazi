@@ -5,7 +5,7 @@ import org.scalatest._
 import org.scalatest.concurrent._
 import scala.util.{Failure, Success}
 import datastore._
-import json.JSON
+import helpers.JSON
 import testhelpers.Helpers
 
 package datastore {

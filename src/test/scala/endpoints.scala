@@ -10,7 +10,7 @@ import datastore.MongoStore
 import endpoints.Endpoints
 import testhelpers.Helpers
 import schemas._
-import json.Base64
+import helpers.Base64
 import notification.NjWorker
 
 package endpoints {

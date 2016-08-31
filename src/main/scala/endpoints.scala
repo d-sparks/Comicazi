@@ -3,7 +3,7 @@ import protocols.http._
 import scala.concurrent._
 import scala.collection.mutable.MutableList
 import ExecutionContext.Implicits.global
-import json.{JSON, Base64}
+import helpers.{JSON, Base64}
 import datastore.DataStore
 import schemas._
 

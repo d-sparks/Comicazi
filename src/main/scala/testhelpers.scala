@@ -2,7 +2,7 @@ import scala.concurrent.{Future, Await}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
-import json.JSON
+import helpers.JSON
 import schemas.{Comic}
 
 package testhelpers {

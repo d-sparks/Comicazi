@@ -10,7 +10,7 @@ import schemas.{
   Subscription,
   Comic
 }
-import json.{Base64, JSON}
+import helpers.{Base64, JSON, Async}
 
 package notification {
 
@@ -18,30 +18,6 @@ package notification {
 
     def thr(msg: String) = new Throwable(msg)
     def jseThr(culprit: String) = thr("JsonSchemaEnforcer fail: " + culprit)
-
-    def sequentially[T](
-      p: Promise[List[Boolean]],
-      i: Int,
-      tasks: List[() => Future[T]],
-      results: List[Boolean]
-    ) : Unit = {
-      if(tasks.length == 0) {
-        p.success(List[Boolean]())
-        return
-      }
-      def nextOrSucceed(result: Boolean) = {
-        if(i == tasks.length - 1) {
-          p.success(results ++ List(result))
-        } else {
-          sequentially[T](p, i + 1, tasks, results ++ List(result))
-        }
-      }
-      val nearFuture = tasks(i)()
-      nearFuture.onComplete {
-        case Success(_) => nextOrSucceed(true)
-        case Failure(_) => nextOrSucceed(false)
-      }
-    }
 
     def makeNotifyTask(comic: Comic)(pnJson: String) = {
       () => {
@@ -82,7 +58,7 @@ package notification {
           } else {
             val q = Promise[List[Boolean]]
             val notifyTasks = results.map(makeNotifyTask(comic))
-            sequentially(q, 0, notifyTasks, List[Boolean]())
+            Async.sequentially(q, 0, notifyTasks, List[Boolean]())
             q.future map { _ => notifyNAtATime(p, comic, n)}
           }
         }
@@ -152,7 +128,7 @@ package notification {
         }}
       }
       val p = Promise[List[Boolean]]
-      sequentially(p, 0, queryHandlers, List[Boolean]())
+      Async.sequentially(p, 0, queryHandlers, List[Boolean]())
       p.future flatMap checkPqsSuccess(comic)
     }
 
