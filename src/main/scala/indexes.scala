@@ -1,4 +1,6 @@
-import org.mongodb.scala.MongoClient
+import scala.concurrent.{Future, Promise, ExecutionContext}
+import ExecutionContext.Implicits.global
+import org.mongodb.scala.{MongoClient, Observer}
 import org.mongodb.scala.model.{IndexModel, IndexOptions}
 import helpers.{BSON, Async}
 
@@ -98,8 +100,30 @@ package indexes {
 
     )
 
-    def build(mongoClient: MongoClient, dbName: String) {
+    def build(mongoClient: MongoClient, dbName: String) : Future[Unit] = {
       val db = mongoClient.getDatabase(dbName)
+
+      // Create a list of tasks, of type () => Future[Unit], to be performed
+      // with the Async.sequentially method.
+
+      val indexTasks = indexSpec.map {
+        case(table: String, indexes: Seq[IndexModel]) => {() => {
+          val p = Promise[Unit]
+          val coll = db.getCollection(table)
+          coll.createIndexes(
+            indexes.asInstanceOf[Seq[IndexModel]]
+          ).subscribe(new Observer[String] {
+            override def onNext(r: String): Unit = { /* Logging */ }
+            override def onError(e: Throwable): Unit = p.failure(e)
+            override def onComplete(): Unit = p.success()
+          })
+          p.future
+        }}
+      }.toList
+
+      val p = Promise[List[Boolean]]
+      Async.sequentially(p, 0, indexTasks, List[Boolean]())
+      p.future map { _ => }
     }
   }
 }
