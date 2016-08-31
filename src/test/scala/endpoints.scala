@@ -12,6 +12,7 @@ import testhelpers.Helpers
 import schemas._
 import helpers.Base64
 import notification.NjWorker
+import indexes.Mongo
 
 package endpoints {
 
@@ -100,6 +101,10 @@ package endpoints {
       Helpers.blockingCall(db.drop("notificationjobs"))
       Helpers.blockingCall(db.drop("pendingnotifications"))
       Helpers.blockingCall(db.drop("notifications"))
+      Helpers.blockingCall(Mongo.build(
+        db.client,
+        "comicazi-test-endpoints-end-to-end1"
+      ))
       val subscription1 = Helpers.ExampleSubscription.asJson
       val subscription2 = Helpers.ExampleSubscription2.asJson
       val subscription3 = Helpers.ExampleSubscription3.asJson
@@ -123,7 +128,7 @@ package endpoints {
       Helpers.blockingCall(worker.lookForJob())
       val getNotifications = db.get("{}", "notifications")
       whenReady(getNotifications) { notifications =>
-        notifications.length shouldBe 6 // until we have dedupe!
+        notifications.length shouldBe 2
         db.close()
       }
     }

@@ -7,6 +7,7 @@ import org.mongodb.scala.{
 }
 import org.mongodb.scala.model.{InsertOneModel, WriteModel}
 import com.mongodb.client.result.DeleteResult
+// import com.mongodb.BulkWriteResult // having trouble finding this, see hack
 import scala.util.{Success, Failure}
 import helpers.JSON
 
@@ -53,7 +54,20 @@ package datastore {
         })
         coll.bulkWrite(ops).subscribe(new Observer[BulkWriteResult] {
           override def onNext(r: BulkWriteResult): Unit = { println(r) }
-          override def onError(e: Throwable): Unit = p.failure(e)
+          override def onError(e: Throwable): Unit = {
+            // hack, should be able to cast e to "BulkWriteException", acess
+            // its errors, which are "BulkWriteErrors", and filter them by
+            // message.
+            val msg = e.getMessage().toString
+            val nonKeyErrors = msg.split("'").toList
+            val nonKeyErrors2 = nonKeyErrors.filter({
+              case(s: String) =>
+                !s.contains("duplicate key") &&
+                !s.contains("BulkWriteError") &&
+                !s.contains("details")
+            })
+            if(nonKeyErrors2.size != 0) p.failure(e) else p.success("done")
+          }
           override def onComplete(): Unit = p.success("done")
         })
         p.future
