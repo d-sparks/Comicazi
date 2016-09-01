@@ -109,6 +109,21 @@ package datastore {
       }
     }
 
+    "A getLastN" should "return the newest n docs" in {
+      val db = newDb()
+      drop(db, "getLastN-happy")
+      val doc1 = JSON.extend(doc, """{"a": "1"}""")
+      val doc2 = JSON.extend(doc, """{"a": "2"}""")
+      val doc3 = JSON.extend(doc, """{"a": "3"}""")
+      Helpers.blockingCall(db.put(doc, "getLastN-happy"))
+      Helpers.blockingCall(db.put(doc, "getLastN-happy"))
+      val dbReturn = db.getLastN(2, doc, "getLastN-happy")
+      whenReady(dbReturn) { dbOutput =>
+        dbOutput shouldBe List(doc2, doc3)
+        db.close()
+      }
+    }
+
   }
 
 }

@@ -1,4 +1,5 @@
 import scala.concurrent.{Future, Promise, ExecutionContext}
+import scala.math.abs
 import ExecutionContext.Implicits.global
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
@@ -7,9 +8,8 @@ import org.mongodb.scala.{
 }
 import org.mongodb.scala.model.{InsertOneModel, WriteModel}
 import com.mongodb.client.result.DeleteResult
-// import com.mongodb.BulkWriteResult // having trouble finding this, see hack
 import scala.util.{Success, Failure}
-import helpers.JSON
+import helpers.{JSON, BSON}
 
 package datastore {
 
@@ -18,6 +18,7 @@ package datastore {
     def putMany(docs: List[String], table: String): Future[String]
     def get(query: String, table: String): Future[List[String]]
     def getN(n: Int, query: String, table: String): Future[List[String]]
+    def getLastN(n: Int, query: String, table: String): Future[List[String]]
     def drop(table: String): Future[Unit]
     def remove(doc: String, table: String): Future[String]
     def ping(): Future[Boolean]
@@ -77,12 +78,22 @@ package datastore {
       }
     }
     def get(query: String, table: String) : Future[List[String]] = {
-      getN(-1, query, table)
+      getNGeneric(-1, 0, query, table)
     }
     def getN(n: Int, query: String, table: String) : Future[List[String]] = {
+      getNGeneric(n, 0, query, table)
+    }
+    def getLastN(n: Int, query: String, table: String) = {
+      getNGeneric(n, -1, query, table)
+    }
+    def getNGeneric(n: Int, sort: Int, query: String, table: String) = {
       val coll = db.getCollection[Document](table)
       val bsonQuery = Document(query).toBsonDocument
       var find = coll.find(bsonQuery)
+      if(sort != 0) {
+        val sortBson = BSON.fromMap(Map[String, Any]("_id" -> sort / abs(sort)))
+        find = find.sort(sortBson)
+      }
       if(n > 0) find = find.limit(n)
       find.toFuture() map { results =>
         results.map({(res: Document) =>
