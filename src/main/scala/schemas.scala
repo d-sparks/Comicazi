@@ -2,14 +2,19 @@ import helpers.{JSON, Base64}
 
 package schemas {
 
-  object Schemas {
+  object Defs {
     case class SchemaValue(value: String, req: Boolean)
     type Schema = Map[String, SchemaValue]
 
     val comicTypes = Map[String, String](
+      "artist" -> "class java.lang.String",
+      "author" -> "class java.lang.String",
+      "issue" -> "class java.lang.Integer",
+      "mint" -> "class java.lang.Boolean",
       "publisher" -> "class java.lang.String",
-      "year" -> "class java.lang.Integer",
-      "mint" -> "class java.lang.Boolean"
+      "series" -> "class java.lang.String",
+      "superhero" -> "class java.lang.String",
+      "year" -> "class java.lang.Integer"
     )
 
     val comic = comicTypes.mapValues({case (fType: String) =>
@@ -48,7 +53,7 @@ package schemas {
 
   class Comic(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.comic) {
+  ) extends JsonSchemaEnforcer(json, Defs.comic) {
     def toB64() = Base64.encode(toJson())
     def toB64Qry() = s"""{"comic":"${toB64()}"}"""
   }
@@ -60,7 +65,7 @@ package schemas {
       val querypattern = JSON.getKeys(filtered)
       JSON.extend(json, s"""{"querypattern":"${querypattern}"}""")
     },
-    Schemas.subscription
+    Defs.subscription
   ) {
     val querypattern = JSON.getKeys(
       JSON.filter(toJson(), List("email", "querypattern"))
@@ -69,15 +74,15 @@ package schemas {
 
   class PendingNotification(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.pendingnotification)
+  ) extends JsonSchemaEnforcer(json, Defs.pendingnotification)
 
   class QueryPattern(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.querypattern)
+  ) extends JsonSchemaEnforcer(json, Defs.querypattern)
 
   class PendingQuery(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.pendingquery) {
+  ) extends JsonSchemaEnforcer(json, Defs.pendingquery) {
     def this(querystring: String, comicJson: String) = this({
       val qs = Base64.encode(querystring)
       val c = Base64.encode(comicJson)
@@ -87,7 +92,7 @@ package schemas {
 
   class NotificationJob(
     private val json: String
-  ) extends JsonSchemaEnforcer(json, Schemas.notificationjob) {
+  ) extends JsonSchemaEnforcer(json, Defs.notificationjob) {
     def this(comicJson: String, handler: Int) = this({
       JSON.fromMap(Map[String, Any](
         "comic" -> Base64.encode(comicJson),
@@ -98,7 +103,7 @@ package schemas {
 
   class JsonSchemaEnforcer(
     private val json: String,
-    private val schema: Schemas.Schema
+    private val schema: Defs.Schema
   ) {
     private val data = JSON.toMutableMap(json)
     // throw away fields that are not in the schema
@@ -107,11 +112,15 @@ package schemas {
     for ((k, v) <- schema) if(v.req) { require(data.contains(k)) }
     // enforce type on provided fields, string fields may not contain " marks
     for ((k, v) <- data) {
+      if(v.getClass.toString == "class java.lang.String") {
+        require(!v.asInstanceOf[String].contains("\""))
+      }
       require(schema.get(k) match {
         case Some(expected) => expected.value == v.getClass().toString()
         case None => false
       })
     }
+    // no quotation marks in string fields
     private val enforcedData = data.toMap[String, Any]
     private val enforcedJson = JSON.fromMap(data) // alphabetized
     def toMap() = enforcedData

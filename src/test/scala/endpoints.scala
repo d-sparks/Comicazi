@@ -10,7 +10,6 @@ import datastore.MongoStore
 import endpoints.Endpoints
 import testhelpers.Helpers
 import schemas._
-import helpers.Base64
 import notification.NjWorker
 import indexes.Mongo
 
@@ -18,19 +17,20 @@ package endpoints {
 
   class EndpointsSpec extends FlatSpec with ScalaFutures with Matchers {
 
-    val comicJson = Helpers.ExampleComic.asJson()
-    val subJson = Helpers.ExampleSubscription.asJson()
-    val comicRequest = new HttpRequest(null, HttpBody(comicJson))
-    val subRequest = new HttpRequest(null, HttpBody(subJson))
+    val comic = new Comic(Helpers.ExampleComic.asJson())
+    val sub = new Subscription(Helpers.ExampleSubscription.asJson())
+    val comicRequest = new HttpRequest(null, HttpBody(comic.toJson))
+    val subRequest = new HttpRequest(null, HttpBody(sub.toJson))
 
     "postComic" should "add the comic to the db" in {
       val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-postComic1")
+      Helpers.blockingCall(db.drop("comics"))
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("comics"))
       Helpers.blockingCall(eps.postComic(comicRequest))
-      val dbReturn = db.get(comicJson, "comics")
+      val dbReturn = db.get(comic.toJson, "comics")
       whenReady(dbReturn) { dbOutput =>
-        dbOutput(0) shouldBe comicJson
+        dbOutput(0) shouldBe comic.toJson
         db.close()
       }
     }
@@ -46,7 +46,7 @@ package endpoints {
       val dbReturn = db.get("{}", "pendingqueries")
       whenReady(dbReturn) { dbOutput =>
         val actualPq = new PendingQuery(dbOutput(0))
-        val expectedPq = new PendingQuery("""{"publisher":"DC"}""", comicJson)
+        val expectedPq = new PendingQuery("""{"publisher":"marvel"}""", comic.toJson)
         actualPq.toJson shouldBe expectedPq.toJson
         db.close()
       }
@@ -60,7 +60,7 @@ package endpoints {
       val dbReturn = db.get("{}", "notificationjobs")
       whenReady(dbReturn) { dbOutput =>
         val actualNj = new NotificationJob(dbOutput(0))
-        val expectedNj = new NotificationJob(comicJson, 1)
+        val expectedNj = new NotificationJob(comic.toJson, 1)
         actualNj.toJson shouldBe expectedNj.toJson
         db.close()
       }
@@ -71,9 +71,9 @@ package endpoints {
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(eps.postSubscription(subRequest))
-      val subReturn = db.get(subJson, "subscriptions")
+      val subReturn = db.get(sub.toJson, "subscriptions")
       whenReady(subReturn) { dbOutput =>
-        dbOutput(0) shouldBe subJson
+        dbOutput(0) shouldBe sub.toJson
         db.close()
       }
     }
@@ -83,7 +83,6 @@ package endpoints {
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("querypatterns"))
       Helpers.blockingCall(eps.postSubscription(subRequest))
-      val sub = new Subscription(subJson)
       val qpJson = s"""{"querypattern":"${sub.querypattern}"}"""
       val qpReturn = db.get(qpJson, "querypatterns")
       whenReady(qpReturn) { dbOutput =>
@@ -128,7 +127,7 @@ package endpoints {
       Helpers.blockingCall(worker.lookForJob())
       val getNotifications = db.get("{}", "notifications")
       whenReady(getNotifications) { notifications =>
-        notifications.length shouldBe 2
+        notifications.length shouldBe 1
         db.close()
       }
     }

@@ -16,35 +16,48 @@ package testhelpers {
     }
 
     val ExampleComic = new Example(mutable.Map[String,Any](
-      "publisher" -> "DC",
-      "year" -> 1973,
-      "mint" -> true
+      "artist" -> "mark bagley",
+      "author" -> "brian michael bendis",
+      "issue" -> 1,
+      "mint" -> true,
+      "series" -> "ultimate spiderman",
+      "superhero" -> "",
+      "publisher" -> "marvel",
+      "year" -> 2000
     ))
 
     val ExampleComic2 = new Example(mutable.Map[String,Any](
-      "publisher" -> "Marvel",
-      "year" -> 1986,
-      "mint" -> false
+      "artist" -> "jim lee",
+      "author" -> "chris claremont",
+      "issue" -> 1,
+      "mint" -> true,
+      "series" -> "x-men",
+      "superhero" -> "wolverine",
+      "publisher" -> "marvel",
+      "year" -> 1991
     ))
 
     val ExampleSubscription = new Example(mutable.Map[String,Any](
-      "publisher" -> "DC",
+      "publisher" -> "marvel",
+      "series" -> "x-men",
+      "issue" -> 1,
+      "mint" -> true,
       "email" -> "amy@x.ai",
-      "querypattern" -> "publisher"
+      "querypattern" -> "publisher,series,superhero"
     ))
 
     val ExampleSubscription2 = new Example(mutable.Map[String,Any](
-      "mint" -> true,
+      "artist" -> "jim lee",
       "email" -> "amy@x.ai",
-      "querypattern" -> "mint"
+      "querypattern" -> "artist"
     ))
 
     val ExampleSubscription3 = new Example(mutable.Map[String,Any](
-      "publisher" -> "Marvel",
-      "year" -> 1986,
-      "mint" -> false,
+      "publisher" -> "dc",
+      "series" -> "detective comics",
+      "superhero" -> "batman",
       "email" -> "dan.sparks@humans.x.ai",
-      "querypattern" -> "publisher,year,mint"
+      "querypattern" -> "publisher,series,superhero"
     ))
 
     val ExampleSubscription4 = new Example(mutable.Map[String, Any](
@@ -56,7 +69,7 @@ package testhelpers {
     class Example(_data: mutable.Map[String,Any]) {
       def asMutableMap() = _data.clone()
       def asMap() = _data.toMap
-      def asJson() = JSON.fromMap(asMap())
+      def asJson() = JSON.fromMap(asMap()).replaceAll("\n", "")
     }
 
   }

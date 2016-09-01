@@ -4,7 +4,7 @@ import scala.util.control.Breaks.{break, breakable}
 import helpers.JSON
 import testhelpers.Helpers.ExampleComic
 import schemas._
-import schemas.Schemas.{Schema, SchemaValue}
+import schemas.Defs.{Schema, SchemaValue}
 import testhelpers.Helpers
 
 package schemas {
@@ -46,13 +46,13 @@ package schemas {
 
   class ComicSpec extends SchemaSpec with JsonSchemaBehaviors {
     val comicJson = Helpers.ExampleComic.asJson()
-    val comicSchema = Schemas.comic
+    val comicSchema = Defs.comic
     it should behave like jsonschemaenforcer(comicJson, comicSchema)
   }
 
   class SubscriptionSpec extends SchemaSpec with JsonSchemaBehaviors {
-    val subJson = Helpers.ExampleSubscription.asJson()
-    val subSchema = Schemas.subscription
+    val subJson = Helpers.ExampleSubscription3.asJson()
+    val subSchema = Defs.subscription
     it should behave like jsonschemaenforcer(subJson, subSchema)
   }
 
