@@ -22,6 +22,9 @@ class Comicazi(
     case req @ Post on Root / "subscriptions" => {
       Callback.fromFuture(eps.postSubscription(req)).map { r => req.ok(r) }
     }
+    case req @ get on Root / "notifications" => {
+      Callback.fromFuture(eps.getNotifications(req, 50)).map { r => req.ok(r) }
+    }
   }
 }
 

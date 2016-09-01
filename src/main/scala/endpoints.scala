@@ -50,6 +50,10 @@ package endpoints {
       db.put(comicJson, "comics")
     }
 
+    // postSubscription inserts two documents into the database, the
+    // QueryPattern of the posted subscription, and the subscription itself,
+    // which includes the QueryPattern as a field.
+
     def postSubscription(request: HttpRequest) : Future[String] = {
       val body = request.body.toString()
       val sub = new Subscription(body)
@@ -57,6 +61,28 @@ package endpoints {
       val querypattern = new QueryPattern(qpJson)
       db.put(querypattern.toJson(), "querypatterns").flatMap { _ =>
         db.put(sub.toJson(), "subscriptions")
+      }
+    }
+
+    // Get's thee newest n notifications
+
+    def getNotifications(request: HttpRequest, n: Int) = {
+      db.getLastN(n, "{}", "notifications") map { results =>
+        val listOfJsons = results.map({case (result: String) =>
+          val notification = new PendingNotification(result)
+          val m = JSON.toMutableMap(notification.toJson)
+          val comicB64 = m.get("comic") match {
+            case Some(s) => s
+            case None => throw new Throwable(
+              "JsonSchemaEnforcer fail: PendingNotification"
+            )
+          }
+          m.put("comic", JSON.toMap(Base64.decode(
+            comicB64.asInstanceOf[String]
+          )))
+          JSON.fromMap(m.toMap)
+        }).toList
+        "[\n" + listOfJsons.mkString(",\n") + "\n]\n"
       }
     }
 
