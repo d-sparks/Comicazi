@@ -53,6 +53,12 @@ package indexes {
         )), background)
       ),
 
+      "querypatterns" -> Seq(
+        IndexModel(BSON.fromMap(Map[String, Any](
+          "querypattern" -> 1
+        )), unique)
+      ),
+
       // We only allow one job at a time for a given comic (hence the
       // unique), but generally want to look them up by handler.
 
