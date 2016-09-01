@@ -104,8 +104,8 @@ package schemas {
     // throw away fields that are not in the schema
     data.retain({case (k, v) => schema.contains(k)})
     // check that all required fields are provided
-    for ((k, v) <- schema) if(v.req) require(data.contains(k))
-    // enforce type on provided fields
+    for ((k, v) <- schema) if(v.req) { require(data.contains(k)) }
+    // enforce type on provided fields, string fields may not contain " marks
     for ((k, v) <- data) {
       require(schema.get(k) match {
         case Some(expected) => expected.value == v.getClass().toString()
@@ -113,7 +113,7 @@ package schemas {
       })
     }
     private val enforcedData = data.toMap[String, Any]
-    private val enforcedJson = JSON.fromMap(data)
+    private val enforcedJson = JSON.fromMap(data) // alphabetized
     def toMap() = enforcedData
     def toJson() = enforcedJson
   }

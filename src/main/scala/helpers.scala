@@ -14,11 +14,17 @@ package helpers {
     private val mapper = new ObjectMapper() with ScalaObjectMapper
     mapper.registerModule(DefaultScalaModule)
 
-    def fromMap(m: Map[String, Any]) = mapper.writeValueAsString(m)
-    def toMutableMap(json: String) = {
-      mapper.readValue[mutable.Map[String, Any]](json)
+    def fromMap(m: Map[String, Any]) = {
+      val sorted = Map[String, Any](m.toSeq.sortBy(_._1):_*)
+      mapper.writeValueAsString(sorted)
     }
-    def toMap(json: String) = toMutableMap(json).toMap[String, Any]
+    def toMutableMap(json: String) = {
+      val m = mapper.readValue[mutable.Map[String, Any]](json)
+      mutable.Map[String, Any](m.toSeq.sortBy(_._1):_*)
+    }
+    def toMap(json: String) = {
+      toMutableMap(json).toMap[String, Any]
+    }
     def filter(json: String, fields: List[String]) = {
       val m = toMutableMap(json)
       for (field <- fields) { m.remove(field) }
@@ -45,7 +51,7 @@ package helpers {
   object Base64 {
     private val encoder = new BASE64Encoder()
     private val decoder = new BASE64Decoder()
-    def encode(s: String) = encoder.encode(s.toCharArray.map(_.toByte))
+    def encode(s: String) = encoder.encode(s.toCharArray.map(_.toByte)).replaceAll("\n", "")
     def decode(s: String) = new String(decoder.decodeBuffer(s).map(_.toChar))
   }
 

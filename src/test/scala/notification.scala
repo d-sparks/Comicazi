@@ -33,9 +33,11 @@ package notification {
     )
 
     def dropFakeData(db: MongoStore) {
+      Helpers.blockingCall(db.drop("comics"))
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(db.drop("querypatterns"))
       Helpers.blockingCall(db.drop("pendingqueries"))
+      Helpers.blockingCall(db.drop("notificationjobs"))
       Helpers.blockingCall(db.drop("pendingnotifications"))
       Helpers.blockingCall(db.drop("notifications"))
     }
