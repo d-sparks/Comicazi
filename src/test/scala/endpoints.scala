@@ -46,7 +46,10 @@ package endpoints {
       val dbReturn = db.get("{}", "pendingqueries")
       whenReady(dbReturn) { dbOutput =>
         val actualPq = new PendingQuery(dbOutput(0))
-        val expectedPq = new PendingQuery("""{"publisher":"marvel"}""", comic.toJson)
+        val expectedPq = new PendingQuery(
+          """{"publisher":"marvel","querypattern":"publisher"}""",
+          comic.toJson
+        )
         actualPq.toJson shouldBe expectedPq.toJson
         db.close()
       }
