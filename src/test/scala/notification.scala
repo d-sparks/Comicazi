@@ -16,9 +16,10 @@ package notification {
   class NjWorkerSpec extends NotificationSpec with ScalaFutures {
     implicit val sys = ActorSystem()
 
-    val db = new MongoStore("localhost:27017", "comicazi-test-notification")
-
-    val njWorker = new NjWorker(db, 1)
+    def newDb() = new MongoStore(
+      "localhost:27017",
+      "comicazi-test-notification"
+    )
 
     // Note: Using traits and `should behave like`, one could have very
     // beautiful tests which test that each concurrent step behaves as
@@ -31,15 +32,15 @@ package notification {
       Helpers.ExampleComic.asJson
     )
 
-    def dropFakeData() {
+    def dropFakeData(db: MongoStore) {
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(db.drop("querypatterns"))
       Helpers.blockingCall(db.drop("pendingqueries"))
       Helpers.blockingCall(db.drop("pendingnotifications"))
       Helpers.blockingCall(db.drop("notifications"))
     }
-    def setUpFakeData() {
-      dropFakeData()
+    def setUpFakeData(db: MongoStore) {
+      dropFakeData(db)
       Helpers.blockingCall(db.put(subscription.toJson, "subscriptions"))
       val querystring = JSON.project(comic.toJson, List("publisher"))
       val pq = new PendingQuery(querystring, comic.toJson)
@@ -49,47 +50,62 @@ package notification {
     }
 
     "look for a job" should "make notifications" in {
-      setUpFakeData()
+      val db = newDb()
+      val njWorker = new NjWorker(db, 1)
+      setUpFakeData(db)
       Helpers.blockingCall(njWorker.lookForJob())
       val pns = db.get("{}", "notifications")
       whenReady(pns) { results =>
         results.length shouldBe 1
+        db.close()
       }
     }
 
     it should "not leave pending queries behind" in {
-      setUpFakeData()
+      val db = newDb()
+      val njWorker = new NjWorker(db, 1)
+      setUpFakeData(db)
       Helpers.blockingCall(njWorker.lookForJob())
       val pqs = db.get("{}", "pendingqueries")
       whenReady(pqs) { results =>
         results shouldBe List[String]()
+        db.close()
       }
     }
 
     it should "not create pendingnotifications unless ∃ pendingqueries" in {
-      setUpFakeData()
+      val db = newDb()
+      val njWorker = new NjWorker(db, 1)
+      setUpFakeData(db)
       Helpers.blockingCall(db.remove("{}", "pendingqueries"))
       Helpers.blockingCall(njWorker.lookForJob())
       val pns = db.get("{}", "pendingnotifications")
       whenReady(pns) { results =>
         results shouldBe List[String]()
+        db.close()
       }
     }
 
     "checkPqsSuccess" should "fail if any PendingQuery failed" in {
+      val db = newDb()
+      val njWorker = new NjWorker(db, 1)
       val f = njWorker.checkPqsSuccess(comic)(List(true, false, true))
       whenReady(f.failed) { e =>
         e shouldBe a [Throwable]
         e.getMessage shouldBe "A query pattern failed"
+        db.close()
       }
     }
 
     "checkPqsExhaustive" should "fail if ∃ PendingQueries" in {
-      setUpFakeData()
+      val db = newDb()
+      val njWorker = new NjWorker(db, 1)
+      setUpFakeData(db)
       val f = njWorker.checkPqsExhaustive(comic)()
       whenReady(f.failed) { e =>
         e shouldBe a [Throwable]
         e.getMessage shouldBe "PendingQuery remaining"
+        db.close()
       }
     }
 

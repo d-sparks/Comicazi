@@ -14,82 +14,98 @@ package datastore {
     val doc = """{"a":"b"}"""
     val doc2 = """{"c":"d"}"""
 
-    def drop(table: String) = Helpers.blockingCall(store.drop(table))
-
     // Because Circle.ci is slow
     implicit val defaultPatience = PatienceConfig(
       timeout = Span(1, Seconds),
       interval = Span(25, Millis)
     )
-    private val store = new MongoStore(
-      "mongodb://localhost:27017",
+
+    def newDb() = new MongoStore(
+      "localhost:27017",
       "comicazi-mongostore-test"
     )
+    def drop(db: MongoStore, table: String) = {
+      Helpers.blockingCall(db.drop(table))
+    }
 
     "A put" should "return the json of the doc" in {
-      drop("put-happy")
-      val dbReturn = store.put(doc, "put-happy")
+      val db = newDb()
+      drop(db, "put-happy")
+      val dbReturn = db.put(doc, "put-happy")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe doc
+        db.close()
       }
     }
 
     it should "fail for invalid json input" in {
-      drop("put-sad")
-      val dbReturn = store.put("{", "put-sad")
+      val db = newDb()
+      drop(db, "put-sad")
+      val dbReturn = db.put("{", "put-sad")
       whenReady(dbReturn.failed) { e =>
         e shouldBe a [Throwable]
+        db.close()
       }
     }
 
     "A put many" should "insert all docs" in {
-      drop("put-many")
-      Helpers.blockingCall(store.putMany(List(doc, doc), "put-many"))
-      val dbReturn = store.get("{}", "put-many")
+      val db = newDb()
+      drop(db, "put-many")
+      Helpers.blockingCall(db.putMany(List(doc, doc), "put-many"))
+      val dbReturn = db.get("{}", "put-many")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe List(doc, doc)
+        db.close()
       }
     }
 
     "A get" should "should return the doc in json" in {
-      drop("get-happy")
-      Helpers.blockingCall(store.put(doc2, "get-happy"))
-      Helpers.blockingCall(store.put(doc, "get-happy"))
-      Helpers.blockingCall(store.put(doc, "get-happy"))
-      Helpers.blockingCall(store.put(doc, "get-happy"))
-      val dbReturn = store.get(doc, "get-happy")
+      val db = newDb()
+      drop(db, "get-happy")
+      Helpers.blockingCall(db.put(doc2, "get-happy"))
+      Helpers.blockingCall(db.put(doc, "get-happy"))
+      Helpers.blockingCall(db.put(doc, "get-happy"))
+      Helpers.blockingCall(db.put(doc, "get-happy"))
+      val dbReturn = db.get(doc, "get-happy")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe List(doc, doc, doc)
+        db.close()
       }
     }
 
     it should "return empty list if doc not found" in {
-      drop("get-sad")
-      val dbReturn = store.get(doc, "get-sad")
+      val db = newDb()
+      drop(db, "get-sad")
+      val dbReturn = db.get(doc, "get-sad")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe List[String]()
+        db.close()
       }
     }
 
     "A getN" should "return only n matching documents" in {
-      drop("getN-happy")
-      Helpers.blockingCall(store.put(doc2, "getN-happy"))
-      Helpers.blockingCall(store.put(doc, "getN-happy"))
-      Helpers.blockingCall(store.put(doc, "getN-happy"))
-      Helpers.blockingCall(store.put(doc, "getN-happy"))
-      val dbReturn = store.getN(2, doc, "getN-happy")
+      val db = newDb()
+      drop(db, "getN-happy")
+      Helpers.blockingCall(db.put(doc2, "getN-happy"))
+      Helpers.blockingCall(db.put(doc, "getN-happy"))
+      Helpers.blockingCall(db.put(doc, "getN-happy"))
+      Helpers.blockingCall(db.put(doc, "getN-happy"))
+      val dbReturn = db.getN(2, doc, "getN-happy")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe List(doc, doc)
+        db.close()
       }
     }
 
     it should "return < n matches if not exhaustive" in {
-      drop("getN-content")
-      Helpers.blockingCall(store.put(doc2, "getN-content"))
-      Helpers.blockingCall(store.put(doc, "getN-content"))
-      val dbReturn = store.getN(2, doc, "getN-content")
+      val db = newDb()
+      drop(db, "getN-content")
+      Helpers.blockingCall(db.put(doc2, "getN-content"))
+      Helpers.blockingCall(db.put(doc, "getN-content"))
+      val dbReturn = db.getN(2, doc, "getN-content")
       whenReady(dbReturn) { dbOutput =>
         dbOutput shouldBe List(doc)
+        db.close()
       }
     }
 
