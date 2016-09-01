@@ -51,9 +51,21 @@ package schemas {
   }
 
   class SubscriptionSpec extends SchemaSpec with JsonSchemaBehaviors {
-    val subJson = Helpers.ExampleSubscription3.asJson()
+    val subJson = Helpers.ExampleSubscription.asJson()
     val subSchema = Defs.subscription
     it should behave like jsonschemaenforcer(subJson, subSchema)
+  }
+
+  class JsonSchemaEnforcerSpec extends SchemaSpec {
+    val stringSchema = Map[String, SchemaValue](
+      "string" -> SchemaValue("class java.lang.String", false)
+    ).asInstanceOf[Schema]
+    try {
+      new JsonSchemaEnforcer("""{"string":"as"df"}""", stringSchema)
+    }
+    catch { case e: Exception =>
+      e shouldBe an [Exception]
+    }
   }
 
 }

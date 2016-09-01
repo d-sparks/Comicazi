@@ -110,11 +110,8 @@ package schemas {
     data.retain({case (k, v) => schema.contains(k)})
     // check that all required fields are provided
     for ((k, v) <- schema) if(v.req) { require(data.contains(k)) }
-    // enforce type on provided fields, string fields may not contain " marks
+    // enforce type on provided fields
     for ((k, v) <- data) {
-      if(v.getClass.toString == "class java.lang.String") {
-        require(!v.asInstanceOf[String].contains("\""))
-      }
       require(schema.get(k) match {
         case Some(expected) => expected.value == v.getClass().toString()
         case None => false
