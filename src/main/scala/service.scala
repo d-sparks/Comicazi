@@ -10,6 +10,7 @@ import akka.actor._
 import endpoints._
 import datastore._
 import notification.NjActor
+import indexes.Mongo
 
 class Comicazi(
   context: ServerContext,
@@ -39,11 +40,15 @@ object Main extends App {
   implicit val sys = ActorSystem()
   implicit val io = IOSystem()
 
-  val store = new MongoStore("localhost:27017", "comicazi")
+  // Create datastore and build indexes
+  val store = new MongoStore("mongodb://172.17.42.1:50001", "comicazi")
+  Mongo.build(store.client, "comicazi")
 
+  // Create endpoints
   val eps = new Endpoints(store)
 
-  Server.start("comicazi", 9000) { worker =>
+  // Start the server
+  Server.start("comicazi", 80) { worker =>
     new ComicaziInitializer(worker, eps)
   }
 

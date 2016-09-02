@@ -23,7 +23,10 @@ package endpoints {
     val subRequest = new HttpRequest(null, HttpBody(sub.toJson))
 
     "postComic" should "add the comic to the db" in {
-      val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-postComic1")
+      val db = new MongoStore(
+        "mongodb://localhost:27017",
+        "comicazi-test-endpoints-postComic1"
+      )
       Helpers.blockingCall(db.drop("comics"))
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("comics"))
@@ -36,7 +39,10 @@ package endpoints {
     }
 
     it should "create appropriate pendingqueries" in {
-      val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-postComic2")
+      val db = new MongoStore(
+        "mongodb://localhost:27017",
+        "comicazi-test-endpoints-postComic2"
+      )
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("pendingqueries"))
       Helpers.blockingCall(db.drop("querypatterns"))
@@ -56,7 +62,10 @@ package endpoints {
     }
 
     it should "create a notificationjob" in {
-      val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-postComic3")
+      val db = new MongoStore(
+        "mongodb://localhost:27017",
+        "comicazi-test-endpoints-postComic3"
+      )
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("notificationjobs"))
       Helpers.blockingCall(eps.postComic(comicRequest))
@@ -70,7 +79,10 @@ package endpoints {
     }
 
     "postSubscription" should "create a subscription" in {
-      val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-postSubscription1")
+      val db = new MongoStore(
+        "mongodb://localhost:27017",
+        "comicazi-test-endpoints-postSubscription1"
+      )
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(eps.postSubscription(subRequest))
@@ -82,7 +94,10 @@ package endpoints {
     }
 
     it should "create a querypattern" in {
-      val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-postSubscription2")
+      val db = new MongoStore(
+        "mongodb://localhost:27017",
+        "comicazi-test-endpoints-postSubscription2"
+      )
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("querypatterns"))
       Helpers.blockingCall(eps.postSubscription(subRequest))
@@ -95,7 +110,10 @@ package endpoints {
     }
 
     "postSubscriptions+postComics" should "create notifications" in {
-      val db = new MongoStore("localhost:27017", "comicazi-test-endpoints-end-to-end1")
+      val db = new MongoStore(
+        "mongodb://localhost:27017",
+        "comicazi-test-endpoints-end-to-end1"
+      )
       val eps = new Endpoints(db)
       Helpers.blockingCall(db.drop("subscriptions"))
       Helpers.blockingCall(db.drop("querypatterns"))

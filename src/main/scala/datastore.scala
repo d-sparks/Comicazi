@@ -28,7 +28,7 @@ package datastore {
   // MongoStore uses MongoDB as a DataStore
 
   class MongoStore(mongoUrl: String, mongoDb: String) extends DataStore {
-    val client = MongoClient("mongodb://localhost:27017")
+    val client = MongoClient(mongoUrl)
     val db = client.getDatabase(mongoDb)
     def put(doc: String, table: String) : Future[String] = {
       val p = Promise[String]()

@@ -56,7 +56,7 @@ package testhelpers {
       "publisher" -> "dc",
       "series" -> "detective comics",
       "superhero" -> "batman",
-      "email" -> "dan.sparks@humans.x.ai",
+      "email" -> "dan.sparks@human.x.ai",
       "querypattern" -> "publisher,series,superhero"
     ))
 

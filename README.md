@@ -41,6 +41,12 @@ If the comic is in inventory:
 - make a record of the sale
 - remove the comic from inventory
 
+(Note: not implemented)
+
+#### GET /notifications
+
+See the last 50 notifications sent.
+
 ### Notification system
 
 A *SearchPattern* is just a string of alphabetically concatenated, distinct strings which are each Comic field names. There are 2^n possible SearchPatterns, where n is the number of fields on the Comic schema.

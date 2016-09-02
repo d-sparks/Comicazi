@@ -21,7 +21,7 @@ package datastore {
     )
 
     def newDb() = new MongoStore(
-      "localhost:27017",
+      "mongodb://localhost:27017",
       "comicazi-mongostore-test"
     )
     def drop(db: MongoStore, table: String) = {
